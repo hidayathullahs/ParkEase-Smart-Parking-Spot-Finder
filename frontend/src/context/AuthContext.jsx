@@ -1,0 +1,153 @@
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+
+const AuthContext = createContext();
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        console.error("useAuth must be used within an AuthProvider");
+        // Returning a dummy object to prevent destructuring crashes in components
+        return {
+            user: null,
+            loading: false,
+            login: () => Promise.resolve({ success: false, message: "Auth Error" }),
+            register: () => Promise.resolve({ success: false, message: "Auth Error" }),
+            googleLogin: () => Promise.resolve({ success: false, message: "Auth Error" }),
+            logout: () => { }
+        };
+    }
+    return context;
+};
+
+export const AuthProvider = ({ children }) => {
+    console.log("AuthProvider: Initializing...");
+
+    const [user, setUser] = useState(null);
+    const [token, setToken] = useState(localStorage.getItem('token') || null);
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    // Axios Interceptor for Authorization
+    useEffect(() => {
+        if (token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            localStorage.setItem('token', token);
+        } else {
+            delete axios.defaults.headers.common['Authorization'];
+            localStorage.removeItem('token');
+        }
+    }, [token]);
+
+    // Check if user is already logged in (Token persistence)
+    useEffect(() => {
+        const checkLoggedIn = async () => {
+            if (token) {
+                try {
+                    const decoded = jwtDecode(token);
+
+                    if (decoded.exp * 1000 < Date.now()) {
+                        console.warn("AuthProvider: Token expired");
+                        logout();
+                        setLoading(false);
+                        return;
+                    }
+
+                    // Timeout promise to prevent hanging (5s)
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
+                    const apiPromise = axios.get('http://localhost:5000/api/auth/me');
+
+                    const { data } = await Promise.race([apiPromise, timeoutPromise]);
+                    setUser(data);
+                } catch (error) {
+                    console.error("AuthProvider: Auth check failed:", error.message);
+                    logout();
+                }
+            }
+            setLoading(false);
+        };
+        checkLoggedIn();
+    }, [token]);
+
+    const login = async (email, password) => {
+        try {
+            const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+            setToken(data.token);
+            setUser(data);
+            redirectUser(data.role);
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Login failed'
+            };
+        }
+    };
+
+    const register = async (name, email, password, role) => {
+        try {
+            const { data } = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role });
+            setToken(data.token);
+            setUser(data);
+            redirectUser(data.role);
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Registration failed'
+            };
+        }
+    };
+
+    const googleLogin = async (credential) => {
+        try {
+            const { data } = await axios.post('http://localhost:5000/api/auth/google', { token: credential });
+            setToken(data.token);
+            setUser(data);
+            redirectUser(data.role);
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Google Login failed'
+            };
+        }
+    };
+
+    const logout = () => {
+        console.log("AuthProvider: Logging out...");
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+        try {
+            navigate('/login');
+        } catch (e) {
+            console.error("Navigation failed during logout (safe to ignore if initialization):", e);
+        }
+    };
+
+    const redirectUser = (role) => {
+        console.log("Redirecting user with role:", role);
+        if (role === 'ADMIN') navigate('/admin/dashboard');
+        else if (role === 'PROVIDER') navigate('/owner/dashboard');
+        else navigate('/find');
+    };
+
+    return (
+        <AuthContext.Provider value={{ user, login, register, googleLogin, logout, loading }}>
+            {loading ? (
+                <div className="min-h-screen bg-black text-white flex items-center justify-center">
+                    <div className="text-center">
+                        <h2 className="text-xl font-bold animate-pulse">ParkEase Initializing...</h2>
+                        <p className="text-gray-500 text-sm mt-2">Checking authentication status</p>
+                    </div>
+                </div>
+            ) : (
+                children
+            )}
+        </AuthContext.Provider>
+    );
+};
