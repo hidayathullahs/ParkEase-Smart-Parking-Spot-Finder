@@ -23,8 +23,8 @@ const AdminDashboard = () => {
     const fetchData = async () => {
         try {
             const [statsRes, pendingRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/admin/stats'),
-                axios.get('http://localhost:5000/api/admin/parkings/pending')
+                axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/stats`),
+                axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/parkings/pending`)
             ]);
             setStats(statsRes.data);
             setPendingParkings(pendingRes.data);

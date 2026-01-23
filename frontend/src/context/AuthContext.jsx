@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
 
                     // Timeout promise to prevent hanging (5s)
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
-                    const apiPromise = axios.get('http://localhost:5000/api/auth/me');
+                    const apiPromise = axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/me`);
 
                     const { data } = await Promise.race([apiPromise, timeoutPromise]);
                     setUser(data);
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/login`, { email, password });
             setToken(data.token);
             setUser(data);
             redirectUser(data.role);
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password, role) => {
         try {
-            const { data } = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role });
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/register`, { name, email, password, role });
             setToken(data.token);
             setUser(data);
             redirectUser(data.role);
@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }) => {
 
     const googleLogin = async (credential) => {
         try {
-            const { data } = await axios.post('http://localhost:5000/api/auth/google', { token: credential });
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`, { token: credential });
             setToken(data.token);
             setUser(data);
             redirectUser(data.role);

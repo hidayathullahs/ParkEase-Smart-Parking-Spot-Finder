@@ -49,7 +49,7 @@ const Profile = () => {
                 vehicles: vehicles, // Send updated vehicles array
             };
 
-            const { data } = await axios.put('http://localhost:5000/api/auth/profile', payload, config);
+            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/profile`, payload, config);
 
             localStorage.setItem('userInfo', JSON.stringify(data));
             setUser(data);

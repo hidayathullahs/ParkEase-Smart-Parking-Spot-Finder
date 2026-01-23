@@ -49,7 +49,7 @@ const AddParking = () => {
         setError('');
 
         try {
-            await axios.post('http://localhost:5000/api/provider/parkings', formData);
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/provider/parkings`, formData);
             navigate('/owner/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create parking');
@@ -99,7 +99,7 @@ const AddParking = () => {
                             <input type="number" step="any" name="longitude" value={formData.longitude} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2" required placeholder="e.g. 72.8777" />
                         </div>
                         <div className="md:col-span-2 text-xs text-gray-400">
-                            * You can copy these from Google Maps (Right click > First option)
+                            * You can copy these from Google Maps (Right click &gt; First option)
                         </div>
                     </div>
 

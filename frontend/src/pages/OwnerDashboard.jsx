@@ -22,10 +22,10 @@ const OwnerDashboard = () => {
             try {
                 // Fetch listings and stats in parallel
                 const [listingsRes, statsRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/provider/parkings', {
+                    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/provider/parkings`, {
                         headers: { Authorization: `Bearer ${token}` }
                     }),
-                    axios.get('http://localhost:5000/api/provider/stats', {
+                    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/provider/stats`, {
                         headers: { Authorization: `Bearer ${token}` }
                     })
                 ]);

@@ -11,6 +11,7 @@ import { AuthProvider } from './context/AuthContext';
 import { BrowserRouter as Router } from 'react-router-dom';
 
 console.log("ParkEase Main Entry Loaded");
+console.log("Google Client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>

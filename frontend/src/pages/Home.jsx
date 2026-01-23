@@ -60,7 +60,7 @@ const Home = () => {
     useEffect(() => {
         const socket = io('http://localhost:5000');
         socket.on('parking_update', (data) => {
-            axios.get('http://localhost:5000/api/parkings')
+            axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/parkings`)
                 .then(({ data }) => {
                     setParkingSpots(data);
                     // Re-apply current filters if needed, but simple re-fetch is okay
@@ -74,7 +74,7 @@ const Home = () => {
         const fetchParkingSpots = async () => {
             try {
                 // Fetch approved parkings from backend
-                const { data } = await axios.get('http://localhost:5000/api/parkings');
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/parkings`);
                 setParkingSpots(data);
                 setFilteredSpots(data); // Initial set
                 setLoading(false);

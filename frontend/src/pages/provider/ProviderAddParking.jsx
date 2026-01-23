@@ -94,7 +94,7 @@ const ProviderAddParking = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/api/provider/parkings', formData, {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/provider/parkings`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             navigate('/owner/dashboard');

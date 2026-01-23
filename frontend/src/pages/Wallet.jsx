@@ -22,7 +22,7 @@ const WalletPage = () => {
             // Process transaction delay
             await new Promise(resolve => setTimeout(resolve, 1500));
 
-            const { data } = await axios.put('http://localhost:5000/api/auth/profile', {
+            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/profile`, {
                 addFunds: amount
             }, config);
 
@@ -90,7 +90,7 @@ const WalletPage = () => {
                                     {loading ? 'Processing...' : <><Plus size={20} /> Add Funds</>}
                                 </button>
                             </form>
-                            {message && <p className={`text-sm mt-3 text-center ${message.includes('Failed') ? 'text-red-400' : 'text-green-400'}`}>{message}</p>}
+                            {message && <p className={`text - sm mt - 3 text - center ${message.includes('Failed') ? 'text-red-400' : 'text-green-400'}`}>{message}</p>}
                         </div>
                     </div>
                 </div>
@@ -109,7 +109,7 @@ const WalletPage = () => {
                                     [...user.transactions].reverse().map((tx, idx) => (
                                         <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition group">
                                             <div className="flex items-center gap-4">
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${tx.type === 'credit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                                <div className={`w - 12 h - 12 rounded - full flex items - center justify - center ${tx.type === 'credit' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                                                     }`}>
                                                     {tx.type === 'credit' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
                                                 </div>
@@ -118,7 +118,7 @@ const WalletPage = () => {
                                                     <p className="text-sm text-muted-foreground">{new Date(tx.date).toLocaleDateString()} {new Date(tx.date).toLocaleTimeString()}</p>
                                                 </div>
                                             </div>
-                                            <span className={`text-lg font-bold ${tx.type === 'credit' ? 'text-green-400' : 'text-white'
+                                            <span className={`text - lg font - bold ${tx.type === 'credit' ? 'text-green-400' : 'text-white'
                                                 }`}>
                                                 {tx.type === 'credit' ? '+' : '-'}₹{tx.amount}
                                             </span>
