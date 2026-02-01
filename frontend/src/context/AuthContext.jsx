@@ -131,9 +131,9 @@ export const AuthProvider = ({ children }) => {
 
     const redirectUser = (role) => {
         console.log("Redirecting user with role:", role);
-        if (role === 'ADMIN') navigate('/admin/dashboard');
-        else if (role === 'PROVIDER') navigate('/owner/dashboard');
-        else navigate('/find');
+        if (role === 'ADMIN') navigate('/admin');
+        else if (role === 'PROVIDER') navigate('/owner');
+        else navigate('/driver');
     };
 
     return (

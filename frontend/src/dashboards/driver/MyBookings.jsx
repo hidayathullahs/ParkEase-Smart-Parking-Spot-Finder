@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getMyTickets, cancelBooking } from '../services/bookingService';
+import toast from 'react-hot-toast';
+import { getMyTickets, cancelBooking } from '../../services/bookingService';
 import { MapPin, Navigation, Clock, XCircle, QrCode } from 'lucide-react';
 
 const MyBookings = () => {
@@ -21,13 +22,15 @@ const MyBookings = () => {
         fetchTickets();
     }, []);
 
+
     const handleCancel = async (id) => {
         if (!window.confirm("Are you sure you want to cancel this booking?")) return;
         try {
             await cancelBooking(id);
+            toast.success("Booking cancelled successfully");
             fetchTickets(); // Refresh
         } catch (error) {
-            alert("Cancel failed");
+            toast.error("Cancel failed");
         }
     };
 

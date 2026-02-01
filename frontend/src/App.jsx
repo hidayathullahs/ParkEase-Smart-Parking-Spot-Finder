@@ -1,4 +1,5 @@
 import React from 'react';
+import { Toaster } from 'react-hot-toast';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -10,15 +11,18 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
-// User Pages
-import Home from './pages/Home';
-import ParkingDetails from './pages/ParkingDetails';
-import MyBookings from './pages/MyBookings';
-import Profile from './pages/Profile';
+// Driver Layout & Dashboard
+import DriverLayout from './layouts/DriverLayout';
+import DriverDashboard from './dashboards/driver/DriverDashboard';
+import MyBookings from './dashboards/driver/MyBookings';
+import Tickets from './dashboards/driver/Tickets';
+import History from './dashboards/driver/History';
+import Profile from './dashboards/driver/Profile';
+
+import Wallet from './pages/Wallet'; // Keep wallet in pages if not generic? Or move it too? Assuming specific for now.
 import Favorites from './pages/Favorites';
-import History from './pages/History';
-import Wallet from './pages/Wallet';
-import Tickets from './pages/Tickets';
+import Home from './pages/Home'; // "Find Parking"
+import ParkingDetails from './pages/ParkingDetails';
 import Notifications from './pages/Notifications';
 
 // Provider Pages
@@ -33,34 +37,27 @@ import AdminDashboard from './pages/AdminDashboard';
 
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
-
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>;
 
   if (user) {
-    if (user.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
-    if (user.role === 'PROVIDER') return <Navigate to="/owner/dashboard" replace />;
-    return <Navigate to="/find" replace />;
+    if (user.role === 'ADMIN') return <Navigate to="/admin" replace />;
+    if (user.role === 'PROVIDER') return <Navigate to="/owner" replace />;
+    return <Navigate to="/driver" replace />;
   }
-
   return children;
 };
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
-
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>;
-
   if (!user) return <Navigate to="/login" replace />;
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect to their appropriate dashboard if they try to access unauthorized pages
-    if (user.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
-    if (user.role === 'PROVIDER') return <Navigate to="/owner/dashboard" replace />;
-    return <Navigate to="/find" replace />;
+    if (user.role === 'ADMIN') return <Navigate to="/admin" replace />;
+    if (user.role === 'PROVIDER') return <Navigate to="/owner" replace />;
+    return <Navigate to="/driver" replace />;
   }
-
-  // Wrap protected content in Layout
-  return <Layout>{children}</Layout>;
+  return children;
 };
 
 function App() {
@@ -73,15 +70,20 @@ function App() {
       <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
       <Route path="/reset-password/:token" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
-      {/* User Routes (Driver) */}
+      {/* Driver Routes (Nested Layout) */}
+      <Route path="/driver" element={<DriverLayout />}>
+        <Route index element={<DriverDashboard />} />
+        <Route path="bookings" element={<MyBookings />} />
+        <Route path="tickets" element={<Tickets />} />
+        <Route path="history" element={<History />} />
+        <Route path="wallet" element={<Wallet />} />
+        <Route path="profile" element={<Profile />} />
+      </Route>
+
+      {/* Legacy/Top-level Routes accessed by Driver */}
       <Route path="/find" element={<ProtectedRoute allowedRoles={['USER']}><Home /></ProtectedRoute>} />
       <Route path="/parking/:id" element={<ProtectedRoute allowedRoles={['USER']}><ParkingDetails /></ProtectedRoute>} />
-      <Route path="/bookings" element={<ProtectedRoute allowedRoles={['USER']}><MyBookings /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute allowedRoles={['USER', 'PROVIDER', 'ADMIN']}><Profile /></ProtectedRoute>} />
       <Route path="/favorites" element={<ProtectedRoute allowedRoles={['USER']}><Favorites /></ProtectedRoute>} />
-      <Route path="/history" element={<ProtectedRoute allowedRoles={['USER']}><History /></ProtectedRoute>} />
-      <Route path="/wallet" element={<ProtectedRoute allowedRoles={['USER']}><Wallet /></ProtectedRoute>} />
-      <Route path="/tickets" element={<ProtectedRoute allowedRoles={['USER']}><Tickets /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute allowedRoles={['USER', 'PROVIDER', 'ADMIN']}><Notifications /></ProtectedRoute>} />
 
       {/* Provider Routes (Space Owner) */}
@@ -98,4 +100,13 @@ function App() {
   );
 }
 
-export default App;
+function AppWithToaster() {
+  return (
+    <>
+      <App />
+      <Toaster position="top-right" reverseOrder={false} />
+    </>
+  );
+}
+
+export default AppWithToaster;
