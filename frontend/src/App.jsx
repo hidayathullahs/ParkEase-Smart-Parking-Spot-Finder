@@ -26,12 +26,21 @@ import ParkingDetails from './pages/ParkingDetails';
 import Notifications from './pages/Notifications';
 
 // Provider Pages
-import OwnerDashboard from './pages/OwnerDashboard';
-import AddParking from './pages/AddParking';
-import ProviderScan from './pages/ProviderScan';
+// Provider Pages
+import OwnerLayout from './dashboards/owner/OwnerLayout';
+import OwnerDashboard from './dashboards/owner/OwnerDashboard';
+import MyParkings from './dashboards/owner/MyParkings';
+import OwnerBookings from './dashboards/owner/OwnerBookings';
+import OwnerEarnings from './dashboards/owner/OwnerEarnings';
+import OwnerProfile from './dashboards/owner/OwnerProfile';
+import AddParking from './pages/AddParking'; // Keep AddParking in pages? Or move to dashboards/owner/AddParking?
+import ProviderScan from './pages/ProviderScan'; // Unused?
 
 // Admin Pages
-import AdminDashboard from './pages/AdminDashboard';
+// Admin Pages
+import AdminLayout from './dashboards/admin/AdminLayout';
+import AdminDashboard from './dashboards/admin/AdminDashboard';
+import UserManagement from './dashboards/admin/UserManagement';
 
 // --- Route Guards ---
 
@@ -87,12 +96,25 @@ function App() {
       <Route path="/notifications" element={<ProtectedRoute allowedRoles={['USER', 'PROVIDER', 'ADMIN']}><Notifications /></ProtectedRoute>} />
 
       {/* Provider Routes (Space Owner) */}
-      <Route path="/owner/dashboard" element={<ProtectedRoute allowedRoles={['PROVIDER']}><OwnerDashboard /></ProtectedRoute>} />
-      <Route path="/owner/add-parking" element={<ProtectedRoute allowedRoles={['PROVIDER']}><AddParking /></ProtectedRoute>} />
-      <Route path="/owner/scan" element={<ProtectedRoute allowedRoles={['PROVIDER']}><ProviderScan /></ProtectedRoute>} />
+      <Route path="/owner" element={<ProtectedRoute allowedRoles={['PROVIDER']}><OwnerLayout /></ProtectedRoute>}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<OwnerDashboard />} />
+        <Route path="add-parking" element={<AddParking />} />
+        <Route path="scan" element={<ProviderScan />} />
+        <Route path="parkings" element={<MyParkings />} />
+        <Route path="bookings" element={<OwnerBookings />} />
+        <Route path="earnings" element={<OwnerEarnings />} />
+        <Route path="profile" element={<OwnerProfile />} />
+      </Route>
 
       {/* Admin Routes */}
-      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
+      {/* Admin Routes */}
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="settings" element={<div className="p-8">Settings (Coming Soon)</div>} />
+      </Route>
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

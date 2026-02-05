@@ -55,7 +55,7 @@ const BookingDrawer = ({ isOpen, onClose, spot, onConfirm }) => {
                                 <div className="bg-[#1a1f2e] rounded-2xl p-6 border border-white/5 space-y-4">
                                     <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                         <span className="text-gray-400">Hourly Rate</span>
-                                        <span className="text-2xl font-bold">${spot.hourlyRate || 25}<span className="text-sm font-normal text-gray-400">/hr</span></span>
+                                        <span className="text-2xl font-bold">${spot.pricing?.hourlyRate || 25}<span className="text-sm font-normal text-gray-400">/hr</span></span>
                                     </div>
 
                                     <div className="space-y-3">

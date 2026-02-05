@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Upload, MapPin } from 'lucide-react';
+import { ArrowLeft, Upload, MapPin, Trash } from 'lucide-react';
 
 const AddParking = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
-        address: '',
+        address: '', // Check if this maps to addressLine
         city: '',
         latitude: '',
         longitude: '',
         ownership: 'SELF',
         timings: { from: '08:00', to: '22:00' },
         hourlyRate: '',
-        dimensions: { width: '', height: '', totalArea: '' },
+        dimensions: { width: '', length: '', totalArea: '' }, // Changed height to length
         images: []
     });
     const [loading, setLoading] = useState(false);
@@ -49,7 +49,30 @@ const AddParking = () => {
         setError('');
 
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/provider/parkings`, formData);
+            const payload = {
+                title: formData.name, // Access 'title' in backend? ParkingListing has 'title'.
+                description: "Parking space at " + formData.address, // Populate description
+                addressLine: formData.address,
+                city: formData.city,
+                location: {
+                    lat: parseFloat(formData.latitude),
+                    lng: parseFloat(formData.longitude)
+                },
+                pricing: {
+                    hourlyRate: parseFloat(formData.hourlyRate)
+                },
+                availableFrom: formData.timings.from,
+                availableTo: formData.timings.to,
+                dimensions: {
+                    width: parseFloat(formData.dimensions.width || 0),
+                    length: parseFloat(formData.dimensions.length || 0),
+                    totalArea: parseFloat(formData.dimensions.totalArea || 0)
+                },
+                images: formData.images,
+                ownershipRelation: formData.ownership
+            };
+
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/provider/parkings`, payload);
             navigate('/owner/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create parking');

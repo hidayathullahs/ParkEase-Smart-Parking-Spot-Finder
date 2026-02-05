@@ -12,7 +12,6 @@ import AIChatbot from '../components/AIChatbot';
 import SpotFinderHeader from '../components/SpotFinderHeader';
 import BookingDrawer from '../components/BookingDrawer';
 import NavigationOverlay from '../components/NavigationOverlay';
-import { openGoogleMapsNavigation } from '../utils/navigation';
 
 // Fix for default Leaflet marker icons
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -46,7 +45,7 @@ const Home = () => {
     const [parkingSpots, setParkingSpots] = useState([]);
     const [filteredSpots, setFilteredSpots] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [loading, setLoading] = useState(true);
+    // const [loading, setLoading] = useState(true); // Unused
     const [userLocation, setUserLocation] = useState(null);
     const [center] = useState([12.9716, 77.5946]); // Default: Bangalore
 
@@ -56,10 +55,9 @@ const Home = () => {
     const [isBookingOpen, setIsBookingOpen] = useState(false);
     const [navDestination, setNavDestination] = useState(null); // For Navigation Overlay
 
-    // Socket Connection
     useEffect(() => {
         const socket = io('http://localhost:5000');
-        socket.on('parking_update', (data) => {
+        socket.on('parking_update', () => { // Removed unused data param
             axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/parkings`)
                 .then(({ data }) => {
                     setParkingSpots(data);
@@ -77,10 +75,8 @@ const Home = () => {
                 const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/parkings`);
                 setParkingSpots(data);
                 setFilteredSpots(data); // Initial set
-                setLoading(false);
             } catch (error) {
                 console.error("Error fetching parkings", error);
-                setLoading(false);
             }
         };
 
@@ -116,13 +112,13 @@ const Home = () => {
     const handleMagicSort = (type) => {
         let sorted = [...filteredSpots];
         if (type === 'cheapest') {
-            sorted.sort((a, b) => (a.hourlyRate || 0) - (b.hourlyRate || 0));
+            sorted.sort((a, b) => (a.pricing?.hourlyRate || 0) - (b.pricing?.hourlyRate || 0));
         } else if (type === 'rating') {
             sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         } else if (type === 'closest' && userLocation) {
             const getDist = (spot) => {
-                if (!spot.location?.coordinates) return Infinity;
-                const [lng, lat] = spot.location.coordinates;
+                if (!spot.location) return Infinity;
+                const { lat, lng } = spot.location;
                 return Math.sqrt(Math.pow(lat - userLocation[0], 2) + Math.pow(lng - userLocation[1], 2));
             };
             sorted.sort((a, b) => getDist(a) - getDist(b));
@@ -192,25 +188,25 @@ const Home = () => {
                                 <Polyline
                                     positions={[
                                         userLocation,
-                                        [navDestination.location.coordinates[1], navDestination.location.coordinates[0]]
+                                        [navDestination.location.lat, navDestination.location.lng]
                                     ]}
                                     pathOptions={{ color: '#3b82f6', weight: 6, opacity: 0.9 }}
                                 />
                             )}
 
                             {filteredSpots.map((spot) => (
-                                spot.location && spot.location.coordinates && (
+                                spot.location && spot.location.lat && (
                                     <Marker
-                                        key={spot._id}
-                                        position={[spot.location.coordinates[1], spot.location.coordinates[0]]}
-                                        icon={createCustomIcon(spot.hourlyRate, selectedSpot?._id === spot._id)}
+                                        key={spot.id}
+                                        position={[spot.location.lat, spot.location.lng]}
+                                        icon={createCustomIcon(spot.pricing?.hourlyRate, selectedSpot?.id === spot.id)}
                                         eventHandlers={{
                                             click: () => handleSpotClick(spot),
                                         }}
                                     >
                                         <Popup className="glass-popup" minWidth={260} closeButton={false}>
                                             <div className="bg-[#131722] text-white p-5 rounded-2xl shadow-2xl border border-white/5 -m-[1px] relative overflow-hidden">
-                                                <button className="absolute top-3 right-3 text-gray-500 hover:text-white" onClick={(e) => {
+                                                <button className="absolute top-3 right-3 text-gray-500 hover:text-white" onClick={() => {
                                                     // e.stopPropagation(); 
                                                 }}>
                                                     <X size={16} />
@@ -220,7 +216,7 @@ const Home = () => {
                                                 <p className="text-xs text-gray-400 mb-4">{spot.city}</p>
 
                                                 <div className="flex items-center gap-3 mb-5">
-                                                    <span className="text-blue-400 font-bold text-xl">₹{spot.hourlyRate}<span className="text-sm text-gray-500 font-normal">/hr</span></span>
+                                                    <span className="text-blue-400 font-bold text-xl">₹{spot.pricing?.hourlyRate}<span className="text-sm text-gray-500 font-normal">/hr</span></span>
                                                     <span className="bg-[#1c3a2f] text-[#34d399] text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">
                                                         {spot.status || 'AVAILABLE'}
                                                     </span>
