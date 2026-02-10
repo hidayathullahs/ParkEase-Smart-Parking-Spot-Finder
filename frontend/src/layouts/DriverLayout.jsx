@@ -102,7 +102,7 @@ export default function DriverLayout() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-white flex">
+        <div className="min-h-screen bg-[#050505] text-white flex">
             <DriverSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
             <div className="flex-1 lg:ml-64 flex flex-col min-h-screen transition-all">

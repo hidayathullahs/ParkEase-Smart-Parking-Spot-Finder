@@ -4,7 +4,7 @@ import AdminSidebar from './components/AdminSidebar';
 
 const AdminLayout = () => {
     return (
-        <div className="min-h-screen bg-background text-white">
+        <div className="min-h-screen bg-[#050505] text-white">
             <AdminSidebar />
             <div className="pl-64">
                 <Outlet />

@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Upload, MapPin, Trash } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 const AddParking = () => {
+    const { token } = useAuth();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
@@ -72,7 +75,11 @@ const AddParking = () => {
                 ownershipRelation: formData.ownership
             };
 
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/provider/parkings`, payload);
+            await axios.post(
+                `${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`,
+                payload,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             navigate('/owner/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to create parking');

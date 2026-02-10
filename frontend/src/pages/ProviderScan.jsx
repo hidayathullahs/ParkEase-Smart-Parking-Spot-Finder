@@ -43,7 +43,7 @@ const ProviderScan = () => {
                 }
             } catch (e) {
                 // Determine if it is a simple string ID
-                console.log("Not JSON, assuming string ID");
+                // console.log("Not JSON, assuming string ID");
                 setScanResult(decodedText);
                 setBookingDetails({ bookingId: decodedText });
                 setStatusMessage('QR Code Scanned! Ready to process.');
@@ -136,8 +136,8 @@ const ProviderScan = () => {
 
                         {statusMessage && (
                             <div className={`p-3 rounded-lg text-sm font-medium ${statusMessage.includes('Error')
-                                    ? 'bg-red-500/10 text-red-500'
-                                    : 'bg-green-500/10 text-green-500'
+                                ? 'bg-red-500/10 text-red-500'
+                                : 'bg-green-500/10 text-green-500'
                                 }`}>
                                 {statusMessage}
                             </div>

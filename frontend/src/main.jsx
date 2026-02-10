@@ -7,11 +7,12 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import ErrorBoundary from './components/ErrorBoundary';
 
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 import { BrowserRouter as Router } from 'react-router-dom';
 
-console.log("ParkEase Main Entry Loaded");
-console.log("Google Client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+// console.log("ParkEase Main Entry Loaded");
+// console.log("Google Client ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
@@ -19,7 +20,9 @@ createRoot(document.getElementById('root')).render(
             <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "dummy_client_id_to_prevent_crash"}>
                 <Router>
                     <AuthProvider>
-                        <App />
+                        <ThemeProvider>
+                            <App />
+                        </ThemeProvider>
                     </AuthProvider>
                 </Router>
             </GoogleOAuthProvider>

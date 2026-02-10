@@ -14,7 +14,7 @@ const Favorites = () => {
 
     const removeFavorite = async (id) => {
         try {
-            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/favorite/${id}`, {}, {
+            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/favorite/${id}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Update local user state

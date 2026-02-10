@@ -5,7 +5,6 @@ import com.parkease.model.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -31,4 +30,7 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
             String parkingId, Date endTime, Date startTime, BookingStatus status);
 
     List<Booking> findByStatusAndEndTimeBefore(BookingStatus status, Date date);
+
+    // Find bookings for a list of parkings
+    List<Booking> findByParkingIdIn(List<com.parkease.model.ParkingListing> parkings);
 }

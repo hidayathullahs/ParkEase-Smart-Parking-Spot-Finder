@@ -1,7 +1,6 @@
 package com.parkease.controller;
 
 import com.parkease.dto.BookingRequest;
-import com.parkease.model.Booking;
 import com.parkease.model.BookingStatus;
 import com.parkease.security.UserDetailsImpl;
 import com.parkease.service.BookingService;
@@ -23,7 +22,8 @@ public class BookingController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> createBooking(@RequestBody BookingRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> createBooking(@RequestBody BookingRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         UserDetailsImpl user = (UserDetailsImpl) userDetails;
         try {
             return ResponseEntity.ok(bookingService.createBooking(request, user.getId()));
@@ -43,7 +43,7 @@ public class BookingController {
     public ResponseEntity<?> getBooking(@PathVariable String id) {
         return ResponseEntity.ok(bookingService.getBookingById(id));
     }
-    
+
     // Provider Scan API
     @PostMapping("/scan")
     @PreAuthorize("hasRole('PROVIDER') or hasRole('ADMIN')")
@@ -55,7 +55,14 @@ public class BookingController {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid Booking ID"));
         }
     }
-    
+
+    @GetMapping("/provider")
+    @PreAuthorize("hasRole('PROVIDER')")
+    public ResponseEntity<?> getProviderBookings(@AuthenticationPrincipal UserDetails userDetails) {
+        UserDetailsImpl user = (UserDetailsImpl) userDetails;
+        return ResponseEntity.ok(bookingService.getProviderBookings(user.getId()));
+    }
+
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('PROVIDER') or hasRole('ADMIN')")
     public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {

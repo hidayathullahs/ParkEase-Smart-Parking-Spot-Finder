@@ -12,4 +12,6 @@ public interface ParkingListingRepository extends JpaRepository<ParkingListing, 
     List<ParkingListing> findByStatus(ListingStatus status);
 
     List<ParkingListing> findByProviderIdId(String providerId);
+
+    boolean existsByTitle(String title);
 }

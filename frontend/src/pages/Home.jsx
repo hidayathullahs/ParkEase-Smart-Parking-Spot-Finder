@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { Link, useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'; // Added useMap
 import L from 'leaflet';
 import axios from 'axios';
-import { Search, MapPin, Navigation, Palette, X } from 'lucide-react';
+import { Search, MapPin, Navigation, Palette, X, ArrowLeft } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import io from 'socket.io-client';
+import SuccessAnimation from '../components/SuccessAnimation';
 
 import MagicFind from '../components/MagicFind';
 import AIChatbot from '../components/AIChatbot';
@@ -27,7 +28,7 @@ L.Icon.Default.mergeOptions({
 
 // Custom Dark Circle Marker like Screenshot
 const createCustomIcon = (price, isSelected) => {
-    const displayPrice = price || '--';
+    const displayPrice = price !== undefined && price !== null ? price : '--';
     return L.divIcon({
         className: 'custom-marker',
         html: `<div class="${isSelected ? 'bg-black border-green-500 scale-110' : 'bg-[#0f1219] border-white/20'} w-12 h-12 rounded-full border-2 flex items-center justify-center shadow-2xl transform transition-all hover:scale-110">
@@ -41,13 +42,23 @@ const createCustomIcon = (price, isSelected) => {
     });
 };
 
+function RecenterMap({ center }) {
+    const map = useMap();
+    useEffect(() => {
+        map.flyTo(center, 16, { animate: true, duration: 1.5 });
+    }, [center]);
+    return null;
+}
+
 const Home = () => {
+    const navigate = useNavigate();
     const [parkingSpots, setParkingSpots] = useState([]);
     const [filteredSpots, setFilteredSpots] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     // const [loading, setLoading] = useState(true); // Unused
     const [userLocation, setUserLocation] = useState(null);
-    const [center] = useState([12.9716, 77.5946]); // Default: Bangalore
+    const [center, setCenter] = useState([12.9716, 77.5946]); // Default: Bangalore
+    const [sortType, setSortType] = useState(null); // Added sort state
 
     // UI State
     const [viewMode, setViewMode] = useState('map'); // 'map' or 'list'
@@ -56,9 +67,9 @@ const Home = () => {
     const [navDestination, setNavDestination] = useState(null); // For Navigation Overlay
 
     useEffect(() => {
-        const socket = io('http://localhost:5000');
+        const socket = io(import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5002');
         socket.on('parking_update', () => { // Removed unused data param
-            axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/parkings`)
+            axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/parkings`)
                 .then(({ data }) => {
                     setParkingSpots(data);
                     // Re-apply current filters if needed, but simple re-fetch is okay
@@ -72,7 +83,7 @@ const Home = () => {
         const fetchParkingSpots = async () => {
             try {
                 // Fetch approved parkings from backend
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/parkings`);
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/parkings`);
                 setParkingSpots(data);
                 setFilteredSpots(data); // Initial set
             } catch (error) {
@@ -93,29 +104,61 @@ const Home = () => {
         }
     }, []);
 
-    // Search Logic
+    // Unified Filter & Sort Logic
     useEffect(() => {
-        if (!searchQuery) {
-            setFilteredSpots(parkingSpots);
-        } else {
+        let result = [...parkingSpots];
+
+        // 1. Filter
+        if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
-            const filtered = parkingSpots.filter(spot =>
+            result = result.filter(spot =>
                 spot.name.toLowerCase().includes(lowerQuery) ||
                 spot.address.toLowerCase().includes(lowerQuery) ||
                 spot.city.toLowerCase().includes(lowerQuery)
             );
-            setFilteredSpots(filtered);
         }
-    }, [searchQuery, parkingSpots]);
+
+        // 2. Sort
+        if (sortType === 'cheapest') {
+            result.sort((a, b) => {
+                const priceA = (a.pricing && a.pricing.hourlyRate !== undefined && a.pricing.hourlyRate !== null) ? Number(a.pricing.hourlyRate) : Infinity;
+                const priceB = (b.pricing && b.pricing.hourlyRate !== undefined && b.pricing.hourlyRate !== null) ? Number(b.pricing.hourlyRate) : Infinity;
+                return priceA - priceB;
+            });
+        } else if (sortType === 'rating') {
+            result.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+        } else if (sortType === 'closest') {
+            if (userLocation) {
+                const getDist = (spot) => {
+                    if (!spot.location) return Infinity;
+                    const { lat, lng } = spot.location;
+                    return Math.sqrt(Math.pow(lat - userLocation[0], 2) + Math.pow(lng - userLocation[1], 2));
+                };
+                result.sort((a, b) => getDist(a) - getDist(b));
+            }
+        }
+
+        setFilteredSpots(result);
+    }, [searchQuery, parkingSpots, sortType, userLocation]);
 
     // Magic Sort Logic
     const handleMagicSort = (type) => {
-        let sorted = [...filteredSpots];
+        // Immediate visual feedback computing
+        let potentialSorted = [...filteredSpots];
+
         if (type === 'cheapest') {
-            sorted.sort((a, b) => (a.pricing?.hourlyRate || 0) - (b.pricing?.hourlyRate || 0));
+            potentialSorted.sort((a, b) => {
+                const priceA = (a.pricing && a.pricing.hourlyRate !== undefined && a.pricing.hourlyRate !== null) ? Number(a.pricing.hourlyRate) : Infinity;
+                const priceB = (b.pricing && b.pricing.hourlyRate !== undefined && b.pricing.hourlyRate !== null) ? Number(b.pricing.hourlyRate) : Infinity;
+                return priceA - priceB;
+            });
         } else if (type === 'rating') {
-            sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        } else if (type === 'closest' && userLocation) {
+            potentialSorted.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+        } else if (type === 'closest') {
+            if (!userLocation) {
+                alert("Please enable location to find closest spots.");
+                return;
+            }
             const getDist = (spot) => {
                 if (!spot.location) return Infinity;
                 const { lat, lng } = spot.location;
@@ -123,7 +166,19 @@ const Home = () => {
             };
             sorted.sort((a, b) => getDist(a) - getDist(b));
         }
-        setFilteredSpots(sorted);
+
+        setFilteredSpots(potentialSorted);
+
+        // Visual Feedback: Fly to top result
+        if (potentialSorted.length > 0) {
+            const bestSpot = potentialSorted[0];
+            if (bestSpot.location) {
+                setCenter([bestSpot.location.lat, bestSpot.location.lng]);
+                setSelectedSpot(bestSpot); // This might open the drawer, or we can use it to open popup
+                // To open popup, we might need a ref or controlled popup. 
+                // For now, centering is good feedback.
+            }
+        }
     };
 
     // Handlers
@@ -142,7 +197,7 @@ const Home = () => {
     };
 
     const handleConfirmBooking = () => {
-        console.log("Booking Confirmed for:", selectedSpot);
+        // console.log("Booking Confirmed for:", selectedSpot);
         alert(`Booking Confirmed for ${selectedSpot.name}!`);
         setIsBookingOpen(false);
     };
@@ -155,13 +210,23 @@ const Home = () => {
                 <SpotFinderHeader viewMode={viewMode} setViewMode={setViewMode} />
             </div>
 
+            {/* Back Button (Desktop) */}
+            {/* Back Button (Desktop) - High Visibility */}
+            <button
+                onClick={() => navigate(-1)}
+                className="absolute top-6 left-6 z-[400] bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all border-2 border-white/20 shadow-2xl group"
+                aria-label="Go Back"
+            >
+                <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
+            </button>
+
             {/* Main Content Area */}
             <div className="flex-1 relative">
 
-                {/* Search Bar - Floating Overlay */}
+                {/* Search Bar - Floating Glass Overlay */}
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[400] w-full max-w-xl px-4 hidden md:block">
-                    <div className="relative flex items-center bg-white rounded-full shadow-2xl px-5 py-3 border border-gray-200/50 backdrop-blur-sm">
-                        <Search className="text-gray-400 mr-3" size={20} />
+                    <div className="relative flex items-center bg-white/80 backdrop-blur-xl rounded-full shadow-2xl px-6 py-4 border border-white/40 ring-1 ring-black/5 transition-all hover:scale-[1.01] hover:bg-white/90 group">
+                        <Search className="text-gray-500 group-focus-within:text-purple-600 transition-colors" size={20} />
                         <input
                             type="text"
                             placeholder="Search locations, cities, or parking hubs..."
@@ -179,6 +244,7 @@ const Home = () => {
                 {viewMode === 'map' ? (
                     <div className="h-full w-full relative z-0">
                         <MapContainer center={center} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                            <RecenterMap center={center} />
                             <TileLayer
                                 url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                             />
@@ -197,7 +263,7 @@ const Home = () => {
                             {filteredSpots.map((spot) => (
                                 spot.location && spot.location.lat && (
                                     <Marker
-                                        key={spot.id}
+                                        key={`${spot.id}-${spot.pricing?.hourlyRate}`}
                                         position={[spot.location.lat, spot.location.lng]}
                                         icon={createCustomIcon(spot.pricing?.hourlyRate, selectedSpot?.id === spot.id)}
                                         eventHandlers={{

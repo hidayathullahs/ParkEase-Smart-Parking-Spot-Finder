@@ -22,7 +22,7 @@ const WalletPage = () => {
             // Process transaction delay
             await new Promise(resolve => setTimeout(resolve, 1500));
 
-            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/profile`, {
+            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/profile`, {
                 addFunds: amount
             }, config);
 

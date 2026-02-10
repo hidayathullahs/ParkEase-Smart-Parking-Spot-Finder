@@ -15,7 +15,6 @@ public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
 
     private String id;
-    private String username; 
     private String email;
     @JsonIgnore
     private String password;
@@ -23,10 +22,9 @@ public class UserDetailsImpl implements UserDetails {
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(String id, String username, String email, String password, String role,
-                           Collection<? extends GrantedAuthority> authorities) {
+    public UserDetailsImpl(String id, String email, String password, String role,
+            Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
-        this.username = username;
         this.email = email;
         this.password = password;
         this.role = role;
@@ -35,21 +33,27 @@ public class UserDetailsImpl implements UserDetails {
 
     public static UserDetailsImpl build(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-        );
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
 
         return new UserDetailsImpl(
                 user.getId(),
-                user.getEmail(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getRole().name(),
                 authorities);
     }
-    
-    public String getId() { return id; }
-    public String getEmail() { return email; }
-    public String getRole() { return role; }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getRole() {
+        return role;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

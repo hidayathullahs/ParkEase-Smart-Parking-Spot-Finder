@@ -23,12 +23,25 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    console.log("AuthProvider: Initializing...");
+    // console.log("AuthProvider: Initializing...");
 
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('token') || null);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+
+    const logout = () => {
+        // console.log("AuthProvider: Logging out...");
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+        try {
+            navigate('/login');
+        } catch (e) {
+            console.error("Navigation failed during logout (safe to ignore if initialization):", e);
+        }
+    };
 
     // Axios Interceptor for Authorization
     useEffect(() => {
@@ -57,7 +70,7 @@ export const AuthProvider = ({ children }) => {
 
                     // Timeout promise to prevent hanging (5s)
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
-                    const apiPromise = axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/me`);
+                    const apiPromise = axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/me`);
 
                     const { data } = await Promise.race([apiPromise, timeoutPromise]);
                     setUser(data);
@@ -65,15 +78,19 @@ export const AuthProvider = ({ children }) => {
                     console.error("AuthProvider: Auth check failed:", error.message);
                     logout();
                 }
+            } else if (user) {
+                // Self-healing: User exists in state but token is missing (Ghost Session)
+                console.warn("AuthProvider: Detected inconsistent state (User set but no Token). Forcing logout.");
+                logout();
             }
             setLoading(false);
         };
         checkLoggedIn();
-    }, [token]);
+    }, [token, user]);
 
     const login = async (email, password) => {
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/login`, { email, password });
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/login`, { email, password });
             setToken(data.token);
             setUser(data);
             redirectUser(data.role);
@@ -88,11 +105,16 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password, role) => {
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/register`, { name, email, password, role });
-            setToken(data.token);
-            setUser(data);
-            redirectUser(data.role);
-            return { success: true };
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/register`, { name, email, password, role });
+
+            if (data.token) {
+                setToken(data.token);
+                setUser(data);
+                redirectUser(data.role);
+                return { success: true };
+            } else {
+                return { success: false, message: "Registration successful but auto-login failed. Please login manually." };
+            }
         } catch (error) {
             return {
                 success: false,
@@ -103,7 +125,7 @@ export const AuthProvider = ({ children }) => {
 
     const googleLogin = async (credential) => {
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`, { token: credential });
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/google`, { token: credential });
             setToken(data.token);
             setUser(data);
             redirectUser(data.role);
@@ -116,21 +138,10 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
-        console.log("AuthProvider: Logging out...");
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
-        try {
-            navigate('/login');
-        } catch (e) {
-            console.error("Navigation failed during logout (safe to ignore if initialization):", e);
-        }
-    };
+
 
     const redirectUser = (role) => {
-        console.log("Redirecting user with role:", role);
+        // console.log("Redirecting user with role:", role);
         if (role === 'ADMIN') navigate('/admin');
         else if (role === 'PROVIDER') navigate('/owner');
         else navigate('/driver');

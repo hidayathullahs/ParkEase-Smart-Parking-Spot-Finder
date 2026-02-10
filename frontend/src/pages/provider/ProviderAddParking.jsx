@@ -94,7 +94,13 @@ const ProviderAddParking = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/provider/parkings`, formData, {
+            const payload = {
+                ...formData,
+                vehicleCapacity: calculated.vehicleCapacity,
+                approxTotalCars: calculated.approxTotalCars
+            };
+
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             navigate('/owner/dashboard');

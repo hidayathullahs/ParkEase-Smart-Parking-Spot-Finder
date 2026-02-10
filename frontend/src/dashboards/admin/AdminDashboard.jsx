@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { motion } from 'framer-motion';
 import {
-    Check, X, Users, MapPin, Clock, AlertTriangle, Activity,
-    TrendingUp, Shield, Server, DollarSign, PieChart as PieChartIcon
+    Activity, Shield, Server, DollarSign,
+    Search, Bell, TrendingUp, Users, MapPin, AlertTriangle, Check
 } from 'lucide-react';
 import {
-    LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    PieChart, Pie, Cell, Legend
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import AdminService from '../../services/adminService';
 
-// Animations
+// --- ANIMATION VARIANTS ---
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
@@ -21,23 +20,41 @@ const itemVariants = {
     visible: { y: 0, opacity: 1 }
 };
 
-// Mock Data
+// --- MOCK DATA ---
 const userGrowthData = [
-    { name: 'Jan', users: 120 },
-    { name: 'Feb', users: 200 },
-    { name: 'Mar', users: 350 },
-    { name: 'Apr', users: 500 },
-    { name: 'May', users: 750 },
-    { name: 'Jun', users: 1100 },
+    { name: 'Jan', users: 120, revenue: 5000 },
+    { name: 'Feb', users: 200, revenue: 8500 },
+    { name: 'Mar', users: 350, revenue: 12000 },
+    { name: 'Apr', users: 500, revenue: 18500 },
+    { name: 'May', users: 750, revenue: 25000 },
+    { name: 'Jun', users: 1100, revenue: 38000 },
 ];
 
-const revenueDistribution = [
-    { name: 'Platform Fees', value: 30000 },
-    { name: 'Commission', value: 15000 },
-    { name: 'Ads', value: 5000 },
-];
+const StatCard = ({ icon: Icon, title, value, subtext, gradient }) => (
+    <motion.div
+        variants={itemVariants}
+        whileHover={{ scale: 1.02, boxShadow: '0 20px 40px -10px rgba(59, 130, 246, 0.2)' }}
+        className={`p-6 rounded-[24px] bg-gradient-to-br ${gradient} border border-white/10 backdrop-blur-xl relative overflow-hidden group shadow-2xl transition-all`}
+    >
+        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform text-white">
+            <Icon size={100} className="transform rotate-12 -translate-y-4 translate-x-4" />
+        </div>
+        {/* Glass Shine */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#10b981'];
+        <div className="relative z-10 text-white">
+            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-4 border border-white/20 backdrop-blur-md shadow-inner">
+                <Icon size={24} />
+            </div>
+            <h3 className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{title}</h3>
+            <div className="text-3xl font-extrabold mb-2 tracking-tight">{value}</div>
+            <div className="flex items-center gap-2 text-xs bg-black/20 w-fit px-2 py-1 rounded-lg border border-white/5">
+                <TrendingUp size={12} className="text-green-400" />
+                <span className="text-green-300 font-medium">{subtext}</span>
+            </div>
+        </div>
+    </motion.div>
+);
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({
@@ -46,192 +63,216 @@ export default function AdminDashboard() {
         activeParkings: 0,
         totalUsers: 0,
         totalProviders: 0,
-        totalBookings: 0
+        totalBookings: 0,
+        totalRevenue: 0
     });
-    const [pendingParkings, setPendingParkings] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [pendingListings, setPendingListings] = useState([]);
+
+    const fetchData = async () => {
+        try {
+            const [users, pending, systemStats] = await Promise.all([
+                AdminService.getAllUsers(),
+                AdminService.getPendingListings(),
+                AdminService.getSystemStats()
+            ]);
+
+            setStats({
+                totalParkings: systemStats.totalSpots || 0,
+                pendingApprovals: pending.length,
+                activeParkings: systemStats.activeSpots || 0,
+                totalUsers: systemStats.totalUsers || 0,
+                totalProviders: systemStats.totalProviders || 0,
+                totalBookings: systemStats.totalBookings || 0
+            });
+            setPendingListings(pending);
+        } catch (error) {
+            console.error("Failed to fetch admin data", error);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Mock API call structure, keeping original logic if API exists
-                const [statsRes, pendingRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/stats`).catch(() => ({ data: { totalParkings: 12, pendingApprovals: 3, totalUsers: 450, activeParkings: 10 } })),
-                    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/parkings/pending`).catch(() => ({ data: [] }))
-                ]);
-                setStats(statsRes.data);
-                setPendingParkings(pendingRes.data);
-            } catch (error) {
-                console.error("Admin fetch error", error);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchData();
     }, []);
 
-    const StatCard = ({ icon: Icon, title, value, color, trend }) => (
-        <motion.div variants={itemVariants} className="glass-card p-6 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 relative overflow-hidden group">
-            <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform ${color}`}>
-                <Icon size={60} />
-            </div>
-            <div className="flex items-start justify-between relative z-10">
-                <div>
-                    <p className="text-gray-400 text-sm font-medium uppercase tracking-wider">{title}</p>
-                    <h3 className="text-3xl font-bold text-white mt-2">{value}</h3>
-                </div>
-                <div className={`p-3 rounded-xl bg-white/5 ${color} bg-opacity-10`}>
-                    <Icon size={24} className={color.replace('text-', '')} />
-                </div>
-            </div>
-            {trend && (
-                <div className="mt-4 flex items-center text-xs font-bold text-green-400">
-                    <TrendingUp size={14} className="mr-1" /> {trend}
-                </div>
-            )}
-        </motion.div>
-    );
-
-    if (loading) return <div className="p-20 text-center text-white animate-pulse">Initializing Admin Core...</div>;
+    const handleApprove = async (id) => {
+        try {
+            await AdminService.approveListing(id);
+            fetchData(); // Refresh
+        } catch (error) {
+            console.error("Failed to approve", error);
+        }
+    };
 
     return (
-        <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 pb-20"
-        >
-            {/* Header */}
-            <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white">Admin Command Center</h1>
-                    <p className="text-muted-foreground">Monitor platform health, growth, and compliance</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-xl text-green-400 border border-green-500/20 animate-pulse">
-                        <Activity size={18} />
-                        <span className="font-bold text-sm">System Healthy</span>
-                    </div>
-                </div>
-            </motion.div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard icon={Users} title="Total Users" value={stats.totalUsers || 1250} color="text-blue-400" trend="+12% this week" />
-                <StatCard icon={MapPin} title="Total Spots" value={stats.totalParkings || 85} color="text-purple-400" trend="+5 new today" />
-                <StatCard icon={DollarSign} title="Revenue" value="₹1.2L" color="text-green-400" trend="+8% vs target" />
-                <StatCard icon={AlertTriangle} title="Pending" value={stats.pendingApprovals || 3} color="text-yellow-400" />
+        <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-purple-500/30 p-6 md:p-10 relative overflow-hidden">
+            {/* Ambient Background */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-blue-900/10 blur-[150px] animate-pulse" style={{ animationDuration: '10s' }}></div>
+                <div className="absolute bottom-[-20%] right-[20%] w-[60vw] h-[60vw] rounded-full bg-purple-900/10 blur-[150px] animate-pulse" style={{ animationDuration: '12s' }}></div>
             </div>
 
-            {/* Main Charts Area */}
-            <div className="grid md:grid-cols-3 gap-6">
-                {/* Growth Chart */}
-                <motion.div variants={itemVariants} className="md:col-span-2 glass-card p-6 rounded-3xl border border-white/10 bg-black/40">
-                    <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                        <TrendingUp size={20} className="text-blue-400" /> User Growth Trajectory
-                    </h3>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={userGrowthData}>
-                                <defs>
-                                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                <XAxis dataKey="name" stroke="#6b7280" tick={{ fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                                <YAxis stroke="#6b7280" tick={{ fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }}
-                                />
-                                <Area type="monotone" dataKey="users" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorUsers)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </motion.div>
-
-                {/* Revenue Pie Chart */}
-                <motion.div variants={itemVariants} className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40">
-                    <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                        <PieChartIcon size={20} className="text-purple-400" /> Revenue Split
-                    </h3>
-                    <div className="h-[300px] w-full relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={revenueDistribution}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {revenueDistribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }}
-                                />
-                                <Legend verticalAlign="bottom" height={36} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        {/* Center Icon */}
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[60%] text-white font-bold text-center">
-                            <div className="text-xs text-gray-500">Total</div>
-                            ₹50k
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="relative z-10 max-w-[1600px] mx-auto space-y-10 pb-20"
+            >
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="relative flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                            <span className="text-green-400 text-xs font-bold tracking-widest uppercase bg-green-900/20 px-2 py-0.5 rounded border border-green-500/20">System Operational</span>
                         </div>
-                    </div>
-                </motion.div>
-            </div>
+                        <h1 className="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">Command Center</h1>
+                        <p className="text-gray-400 mt-2 font-light text-lg">Real-time system overview and administration.</p>
+                    </motion.div>
 
-            {/* Pending Approvals Section */}
-            <motion.div variants={itemVariants} className="glass-card p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-gray-900 to-black">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Shield size={20} className="text-yellow-400" /> Pending Verification
-                    </h3>
-                    <button className="text-sm text-blue-400 hover:text-blue-300">View All</button>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-md"
+                    >
+                        <div className="relative group">
+                            <Search className="absolute left-4 top-3 text-gray-500 group-focus-within:text-white transition-colors" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search system logs..."
+                                className="bg-black/20 border border-white/5 rounded-xl pl-12 pr-6 py-2.5 text-sm text-white focus:outline-none focus:bg-white/5 focus:border-blue-500/50 transition-all w-64 placeholder:text-gray-600"
+                            />
+                        </div>
+                        <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition text-gray-400 hover:text-white relative">
+                            <Bell size={20} />
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-black animate-pulse"></span>
+                        </button>
+                    </motion.div>
                 </div>
 
-                {pendingParkings.length === 0 ? (
-                    <div className="text-center py-10 bg-white/5 rounded-2xl border border-white/5 border-dashed">
-                        <CheckCircle size={48} className="mx-auto text-green-500 mb-4 opacity-50" />
-                        <h4 className="text-gray-300 font-medium">All Caught Up!</h4>
-                        <p className="text-sm text-gray-500 mt-1">No pending validations required.</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {/* Using placeholder for pending items logic for brevity, assuming similar map logic to previous version */}
-                        {pendingParkings.map(parking => (
-                            <div key={parking.id} className="flex flex-col md:flex-row gap-4 p-4 bg-white/5 rounded-xl border border-white/5 items-center">
-                                <div className="w-12 h-12 bg-gray-700 rounded-lg shrink-0">
-                                    {/* Img placeholder */}
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatCard icon={Users} title="Total Users" value={stats.totalUsers.toLocaleString()} subtext="&nbsp;" gradient="from-blue-600/20 to-cyan-600/20" />
+                    <StatCard icon={DollarSign} title="Revenue" value={`₹${(stats.totalRevenue || 0).toLocaleString()}`} subtext="Total Earnings" gradient="from-purple-600/20 to-pink-600/20" />
+                    <StatCard icon={MapPin} title="Active Spots" value={stats.activeParkings} subtext="Verified Spots" gradient="from-orange-600/20 to-red-600/20" />
+                    <StatCard icon={Server} title="Total Bookings" value={stats.totalBookings} subtext="All Time" gradient="from-green-600/20 to-emerald-600/20" />
+                </div>
+
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Traffic Chart */}
+                    <motion.div
+                        variants={itemVariants}
+                        className="lg:col-span-2 p-8 rounded-[32px] bg-[#0a0a0a]/80 backdrop-blur-2xl border border-white/10 relative overflow-hidden"
+                    >
+                        {/* Decorative header line */}
+                        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-50"></div>
+
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-blue-500/20">
+                                    <Activity className="text-blue-400" size={20} />
                                 </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-white">{parking.name}</h4>
-                                    <p className="text-sm text-gray-400">{parking.addressLine}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm font-bold border border-green-500/30 hover:bg-green-500/30">Approve</button>
-                                    <button className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm font-bold border border-red-500/30 hover:bg-red-500/30">Reject</button>
-                                </div>
+                                Network Traffic
+                            </h3>
+                            <select className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-gray-400 focus:outline-none hover:bg-white/5 transition">
+                                <option>Last 6 Months</option>
+                                <option>Last Year</option>
+                            </select>
+                        </div>
+                        <div className="h-[350px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={userGrowthData}>
+                                    <defs>
+                                        <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.5} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                                    <XAxis
+                                        dataKey="name"
+                                        stroke="#ffffff30"
+                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        stroke="#ffffff30"
+                                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        dx={-10}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: 'rgba(5, 5, 5, 0.9)',
+                                            border: '1px solid #333',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.8)'
+                                        }}
+                                        itemStyle={{ color: '#fff' }}
+                                        cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="users"
+                                        stroke="#3b82f6"
+                                        strokeWidth={3}
+                                        fillOpacity={1}
+                                        fill="url(#colorUsers)"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </motion.div>
+
+                    {/* Approvals Widget */}
+                    <motion.div variants={itemVariants} className="p-8 rounded-[32px] bg-[#0a0a0a]/80 backdrop-blur-2xl border border-white/10 relative flex flex-col h-full">
+                        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent opacity-50"></div>
+
+                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-yellow-500/20">
+                                <AlertTriangle className="text-yellow-400" size={20} />
                             </div>
-                        ))}
-                    </div>
-                )}
+                            Pending Approvals
+                        </h3>
+
+                        <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                            {pendingListings.length === 0 ? (
+                                <p className="text-gray-500 text-center py-4">No pending approvals.</p>
+                            ) : (
+                                pendingListings.map((listing) => (
+                                    <div key={listing.id} className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition border border-white/5 flex flex-col gap-3 group">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-bold text-white text-sm group-hover:text-blue-400 transition-colors">{listing.title}</h4>
+                                                <p className="text-xs text-gray-500 mt-0.5">{listing.addressLine}</p>
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase tracking-wide bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded border border-yellow-500/20">Pending</span>
+                                        </div>
+                                        <div className="flex gap-2 mt-2">
+                                            <button
+                                                onClick={() => handleApprove(listing.id)}
+                                                className="flex-1 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs font-bold rounded-lg border border-green-500/20 transition flex items-center justify-center gap-1">
+                                                <Check size={12} /> Approve
+                                            </button>
+                                            <button className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold rounded-lg border border-red-500/20 transition">Reject</button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        {/* View All Overlay */}
+                        <div className="mt-4 pt-4 border-t border-white/5 text-center">
+                            <button className="text-xs text-gray-500 hover:text-white uppercase font-bold tracking-widest transition-colors">View All Requests</button>
+                        </div>
+                    </motion.div>
+                </div>
+
             </motion.div>
-        </motion.div>
+        </div>
     );
 }
-
-// Helper icon component for empty state
-const CheckCircle = ({ size, className }) => (
-    <div className={className}>
-        <div className="rounded-full bg-green-500/20 p-3 inline-block">
-            <Check size={size} />
-        </div>
-    </div>
-);

@@ -282,7 +282,7 @@ export default function ParkingDetails() {
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
                 amount={totalAmount}
-                onPaymentComplete={processBooking}
+                onConfirm={processBooking}
             />
         </div>
     );

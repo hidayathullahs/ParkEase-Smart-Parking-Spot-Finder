@@ -1,104 +1,149 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, CheckCircle, Loader2, ShieldCheck, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X, CreditCard, Lock, CheckCircle, Loader } from 'lucide-react';
 
-const PaymentModal = ({ isOpen, onClose, amount, onPaymentComplete }) => {
-    const [status, setStatus] = useState('idle'); // idle, processing, success, error
+const PaymentModal = ({ isOpen, onClose, amount, onConfirm }) => {
+    const [step, setStep] = useState('input'); // input, processing, success
+    const [cardDetails, setCardDetails] = useState({
+        number: '',
+        expiry: '',
+        cvc: '',
+        name: ''
+    });
 
     useEffect(() => {
         if (isOpen) {
-            setStatus('idle');
+            setStep('input');
+            setCardDetails({ number: '', expiry: '', cvc: '', name: '' });
         }
     }, [isOpen]);
 
-    const handlePay = () => {
-        setStatus('processing');
+    const handleProcess = async (e) => {
+        e.preventDefault();
+        setStep('processing');
+
+        // Simulate API delay
         setTimeout(() => {
-            setStatus('success');
+            setStep('success');
             setTimeout(() => {
-                onPaymentComplete();
+                onConfirm(); // Trigger actual booking
+                // onClose(); // Let parent close it
             }, 1000);
-        }, 2500); // 2.5s simulated delay
+        }, 2000);
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <AnimatePresence>
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1300] flex items-center justify-center p-4"
+            >
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-[#1a1b1e] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden"
+                    className="bg-[#1a1f2e] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative"
                 >
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10" />
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -ml-10 -mb-10" />
-
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors"
-                        disabled={status === 'processing' || status === 'success'}
-                    >
-                        <X size={20} />
-                    </button>
-
-                    <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                        <CreditCard className="text-blue-400" /> Secure Payment
-                    </h2>
-
-                    <div className="space-y-6">
-                        {/* Amount Card */}
-                        <div className="bg-white/5 rounded-xl p-4 border border-white/5 mx-auto text-center">
-                            <p className="text-white/60 text-sm mb-1">Total Amount</p>
-                            <h3 className="text-3xl font-bold text-white">₹{amount}</h3>
-                        </div>
-
-                        {/* Payment Method Dummy */}
-                        <div className="space-y-3">
-                            <p className="text-sm text-white/60 font-medium pl-1">Payment Method</p>
-                            <div className="flex items-center gap-3 p-3 rounded-lg border border-blue-500/30 bg-blue-500/10 cursor-pointer transition ring-1 ring-blue-500">
-                                <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center">
-                                    <div className="flex gap-1">
-                                        <div className="w-2 h-2 rounded-full bg-red-400"></div>
-                                        <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                                    </div>
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-semibold text-white">MasterCard •••• 4242</p>
-                                </div>
-                                <CheckCircle size={16} className="text-blue-400" />
-                            </div>
-                        </div>
-
-                        {/* Action Button */}
-                        <button
-                            onClick={handlePay}
-                            disabled={status !== 'idle'}
-                            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${status === 'success' ? 'bg-green-500 text-white' :
-                                    status === 'processing' ? 'bg-blue-600/50 cursor-not-allowed' :
-                                        'bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 hover:scale-[1.02]'
-                                }`}
-                        >
-                            {status === 'idle' && (
-                                <>Pay Now <ShieldCheck size={20} /></>
-                            )}
-                            {status === 'processing' && (
-                                <><Loader2 className="animate-spin" /> Processing...</>
-                            )}
-                            {status === 'success' && (
-                                <><CheckCircle /> Payment Successful</>
-                            )}
+                    {/* Header */}
+                    <div className="flex justify-between items-center p-6 border-b border-white/5 bg-white/5">
+                        <h3 className="text-xl font-bold flex items-center gap-2">
+                            <CreditCard className="text-blue-400" />
+                            Secure Payment
+                        </h3>
+                        <button onClick={onClose} disabled={step !== 'input'} className="text-gray-400 hover:text-white disabled:opacity-50">
+                            <X size={20} />
                         </button>
                     </div>
 
-                    <p className="text-center text-xs text-white/30 mt-6 flex items-center justify-center gap-1">
-                        <ShieldCheck size={12} /> Encrypted & Secure Connection
-                    </p>
+                    <div className="p-6">
+                        {step === 'input' && (
+                            <form onSubmit={handleProcess} className="space-y-4">
+                                <div className="text-center mb-6">
+                                    <p className="text-gray-400 text-sm">Total Amount to Pay</p>
+                                    <div className="text-3xl font-bold text-white">₹{amount}</div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Card Number</label>
+                                    <input
+                                        type="text"
+                                        placeholder="0000 0000 0000 0000"
+                                        maxLength="19"
+                                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none font-mono"
+                                        required
+                                        value={cardDetails.number}
+                                        onChange={e => setCardDetails({ ...cardDetails, number: e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim() })}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Expiry</label>
+                                        <input
+                                            type="text"
+                                            placeholder="MM/YY"
+                                            maxLength="5"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none font-mono"
+                                            required
+                                            value={cardDetails.expiry}
+                                            onChange={e => setCardDetails({ ...cardDetails, expiry: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">CVC</label>
+                                        <input
+                                            type="password"
+                                            placeholder="123"
+                                            maxLength="3"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none font-mono"
+                                            required
+                                            value={cardDetails.cvc}
+                                            onChange={e => setCardDetails({ ...cardDetails, cvc: e.target.value.replace(/\D/g, '') })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-4">
+                                    <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                                        <Lock size={16} /> Pay ₹{amount}
+                                    </button>
+                                </div>
+
+                                <div className="flex justify-center items-center gap-4 mt-4 text-gray-500 text-xs">
+                                    <span className="flex items-center gap-1"><Lock size={10} /> 256-bit SSL Encrypted</span>
+                                </div>
+                            </form>
+                        )}
+
+                        {step === 'processing' && (
+                            <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                                <Loader size={48} className="text-blue-500 animate-spin" />
+                                <p className="text-gray-300 font-medium">Processing Transaction...</p>
+                                <p className="text-xs text-gray-500">Please do not close this window</p>
+                            </div>
+                        )}
+
+                        {step === 'success' && (
+                            <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center text-green-500"
+                                >
+                                    <CheckCircle size={32} />
+                                </motion.div>
+                                <p className="text-xl font-bold text-white">Payment Successful!</p>
+                                <p className="text-gray-400">Redirecting to your ticket...</p>
+                            </div>
+                        )}
+                    </div>
                 </motion.div>
-            </AnimatePresence>
-        </div>
+            </motion.div>
+        </AnimatePresence>
     );
 };
 

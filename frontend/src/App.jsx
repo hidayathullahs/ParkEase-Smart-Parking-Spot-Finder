@@ -2,6 +2,9 @@ import React from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import PageTransition from './components/PageTransition';
 import Layout from './components/Layout';
 
 // Public Pages
@@ -41,6 +44,8 @@ import ProviderScan from './pages/ProviderScan'; // Unused?
 import AdminLayout from './dashboards/admin/AdminLayout';
 import AdminDashboard from './dashboards/admin/AdminDashboard';
 import UserManagement from './dashboards/admin/UserManagement';
+import AdminSettings from './dashboards/admin/AdminSettings';
+import AdminApprovals from './pages/admin/AdminApprovals';
 
 // --- Route Guards ---
 
@@ -70,55 +75,60 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 function App() {
+  const location = useLocation();
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
-      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-      <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-      <Route path="/reset-password/:token" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public Routes */}
+        <Route path="/" element={<PageTransition><PublicRoute><Landing /></PublicRoute></PageTransition>} />
+        <Route path="/login" element={<PageTransition><PublicRoute><Login /></PublicRoute></PageTransition>} />
+        <Route path="/register" element={<PageTransition><PublicRoute><Register /></PublicRoute></PageTransition>} />
+        <Route path="/forgot-password" element={<PageTransition><PublicRoute><ForgotPassword /></PublicRoute></PageTransition>} />
+        <Route path="/reset-password/:token" element={<PageTransition><PublicRoute><ResetPassword /></PublicRoute></PageTransition>} />
 
-      {/* Driver Routes (Nested Layout) */}
-      <Route path="/driver" element={<DriverLayout />}>
-        <Route index element={<DriverDashboard />} />
-        <Route path="bookings" element={<MyBookings />} />
-        <Route path="tickets" element={<Tickets />} />
-        <Route path="history" element={<History />} />
-        <Route path="wallet" element={<Wallet />} />
-        <Route path="profile" element={<Profile />} />
-      </Route>
+        {/* Driver Routes (Nested Layout) */}
+        <Route path="/driver" element={<DriverLayout />}>
+          <Route index element={<DriverDashboard />} />
+          <Route path="bookings" element={<MyBookings />} />
+          <Route path="tickets" element={<Tickets />} />
+          <Route path="history" element={<History />} />
+          <Route path="wallet" element={<Wallet />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
 
-      {/* Legacy/Top-level Routes accessed by Driver */}
-      <Route path="/find" element={<ProtectedRoute allowedRoles={['USER']}><Home /></ProtectedRoute>} />
-      <Route path="/parking/:id" element={<ProtectedRoute allowedRoles={['USER']}><ParkingDetails /></ProtectedRoute>} />
-      <Route path="/favorites" element={<ProtectedRoute allowedRoles={['USER']}><Favorites /></ProtectedRoute>} />
-      <Route path="/notifications" element={<ProtectedRoute allowedRoles={['USER', 'PROVIDER', 'ADMIN']}><Notifications /></ProtectedRoute>} />
+        {/* Legacy/Top-level Routes accessed by Driver */}
+        {/* Legacy/Top-level Routes accessed by Driver */}
+        <Route path="/find" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><Home /></ProtectedRoute></PageTransition>} />
+        <Route path="/parking/:id" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><ParkingDetails /></ProtectedRoute></PageTransition>} />
+        <Route path="/favorites" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><Favorites /></ProtectedRoute></PageTransition>} />
+        <Route path="/notifications" element={<PageTransition><ProtectedRoute allowedRoles={['USER', 'PROVIDER', 'ADMIN']}><Notifications /></ProtectedRoute></PageTransition>} />
 
-      {/* Provider Routes (Space Owner) */}
-      <Route path="/owner" element={<ProtectedRoute allowedRoles={['PROVIDER']}><OwnerLayout /></ProtectedRoute>}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<OwnerDashboard />} />
-        <Route path="add-parking" element={<AddParking />} />
-        <Route path="scan" element={<ProviderScan />} />
-        <Route path="parkings" element={<MyParkings />} />
-        <Route path="bookings" element={<OwnerBookings />} />
-        <Route path="earnings" element={<OwnerEarnings />} />
-        <Route path="profile" element={<OwnerProfile />} />
-      </Route>
+        {/* Provider Routes (Space Owner) */}
+        <Route path="/owner" element={<ProtectedRoute allowedRoles={['PROVIDER']}><OwnerLayout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<OwnerDashboard />} />
+          <Route path="add-parking" element={<AddParking />} />
+          <Route path="scan" element={<ProviderScan />} />
+          <Route path="parkings" element={<MyParkings />} />
+          <Route path="bookings" element={<OwnerBookings />} />
+          <Route path="earnings" element={<OwnerEarnings />} />
+          <Route path="profile" element={<OwnerProfile />} />
+        </Route>
 
-      {/* Admin Routes */}
-      {/* Admin Routes */}
-      <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="users" element={<UserManagement />} />
-        <Route path="settings" element={<div className="p-8">Settings (Coming Soon)</div>} />
-      </Route>
+        {/* Admin Routes */}
+        {/* Admin Routes */}
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminLayout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="approvals" element={<AdminApprovals />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
   );
 }
 

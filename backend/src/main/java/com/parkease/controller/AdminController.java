@@ -19,13 +19,14 @@ import java.util.Map;
 public class AdminController {
     @Autowired
     ParkingService parkingService;
-    
+
     @Autowired
     UserRepository userRepository; // Direct repo for simple user management
 
     @GetMapping("/listings/pending")
     public ResponseEntity<?> getAllListings() {
-        // In real app, might want filter. For now returning all so admin can see PENDING
+        // In real app, might want filter. For now returning all so admin can see
+        // PENDING
         return ResponseEntity.ok(parkingService.getAllListings());
     }
 
@@ -39,11 +40,33 @@ public class AdminController {
     public ResponseEntity<?> rejectListing(@PathVariable String id, @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(parkingService.rejectListing(id, body.get("reason")));
     }
-    
+
+    @Autowired
+    com.parkease.repository.BookingRepository bookingRepository; // Inject BookingRepository for stats
+
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll());
     }
-    
-    // Stats endpoint - can be added later
+
+    @GetMapping("/stats")
+    public ResponseEntity<?> getSystemStats() {
+        long totalUsers = userRepository.count();
+        long totalProviders = userRepository.findAll().stream().filter(u -> u.getRole().name().equals("PROVIDER"))
+                .count();
+        long totalBookings = bookingRepository.count();
+        long activeSpots = parkingService.getApprovedListings().size();
+
+        // Calculate total revenue (sum of all bookings)
+        double totalRevenue = bookingRepository.findAll().stream()
+                .mapToDouble(com.parkease.model.Booking::getTotalAmount)
+                .sum();
+
+        return ResponseEntity.ok(Map.of(
+                "totalUsers", totalUsers,
+                "totalProviders", totalProviders,
+                "totalBookings", totalBookings,
+                "activeSpots", activeSpots,
+                "totalRevenue", totalRevenue));
+    }
 }

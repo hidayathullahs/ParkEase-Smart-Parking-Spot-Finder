@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/render.yaml
 services:
   - type: web
     name: parkease-backend
@@ -7,8 +8,7 @@ services:
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     envVars:
-      - key: MONGO_URI
-        sync: false
+
       - key: JWT_SECRET
         sync: false
       - key: PORT

@@ -1,7 +1,6 @@
 package com.parkease.controller;
 
 import com.parkease.dto.GoogleLoginRequest;
-import com.parkease.dto.JwtResponse;
 import com.parkease.dto.LoginRequest;
 import com.parkease.dto.SignupRequest;
 import com.parkease.model.User;
@@ -22,7 +21,7 @@ import java.util.Map;
 public class AuthController {
     @Autowired
     AuthService authService;
-    
+
     @Autowired
     UserService userService;
 
@@ -34,13 +33,12 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         try {
-            authService.registerUser(signUpRequest);
-            return ResponseEntity.ok(Map.of("message", "User registered successfully!"));
+            return ResponseEntity.ok(authService.registerUser(signUpRequest));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
-    
+
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@RequestBody GoogleLoginRequest googleRequest) {
         return ResponseEntity.ok(authService.googleLogin(googleRequest));
@@ -65,7 +63,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
-    
+
     @GetMapping("/me")
     public ResponseEntity<?> getMe(@AuthenticationPrincipal UserDetails userDetails) {
         // Logic to return current user details
@@ -77,16 +75,17 @@ public class AuthController {
             User user = userService.getUserById(userImpl.getId());
             return ResponseEntity.ok(user);
         } catch (Exception e) {
-             return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+            return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
         }
     }
-    
+
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails userDetails, @RequestBody User userUpdates) {
+    public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody User userUpdates) {
         com.parkease.security.UserDetailsImpl userImpl = (com.parkease.security.UserDetailsImpl) userDetails;
         return ResponseEntity.ok(userService.updateProfile(userImpl.getId(), userUpdates));
     }
-    
+
     @PutMapping("/favorite/{id}")
     public ResponseEntity<?> toggleFavorite(@AuthenticationPrincipal UserDetails userDetails, @PathVariable String id) {
         com.parkease.security.UserDetailsImpl userImpl = (com.parkease.security.UserDetailsImpl) userDetails;

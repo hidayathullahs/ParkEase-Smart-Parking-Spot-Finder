@@ -1,6 +1,6 @@
 # ✅ Mentor Explanation (Short + Clear + Complete)
 
-### **Sir, the system has 3 logins (roles):**
+## **Sir, the system has 3 logins (roles):**
 
 1. **User / Driver**
 2. **Parking Provider**
@@ -8,7 +8,7 @@
 
 ---
 
-# 1) ✅ User / Driver Flow
+## 1) ✅ User / Driver Flow
 
 **User will:**
 
@@ -38,7 +38,7 @@
 
 ---
 
-# 2) ✅ Parking Provider Flow
+## 2) ✅ Parking Provider Flow
 
 **Parking Provider will login and create parking listing using a form:**
 
@@ -68,7 +68,7 @@
 
 ---
 
-# 3) ✅ Admin Flow (Approval + Dashboard)
+## 3) ✅ Admin Flow (Approval + Dashboard)
 
 **Admin will:**
 
@@ -91,7 +91,7 @@
 
 ---
 
-# ✅ Special condition (Important)
+## ✅ Special condition (Important)
 
 * Slot allocation should consider vehicle size
   Example:
@@ -103,7 +103,7 @@ So vehicle dimension decides availability.
 
 ---
 
-# ✅ Test cases we will cover
+## ✅ Test cases we will cover
 
 * booking overlap prevention
 * user extension after timer

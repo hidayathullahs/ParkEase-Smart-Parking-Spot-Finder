@@ -49,7 +49,7 @@ public class AuthService {
                 userDetails.getRole());
     }
 
-    public void registerUser(SignupRequest signUpRequest) throws Exception {
+    public JwtResponse registerUser(SignupRequest signUpRequest) throws Exception {
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             throw new Exception("Error: Email is already in use!");
         }
@@ -60,14 +60,29 @@ public class AuthService {
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
         user.setRole(signUpRequest.getRole());
-        
+
         userRepository.save(user);
+
+        // Auto-login logic
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(signUpRequest.getEmail(), signUpRequest.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        return new JwtResponse(jwt,
+                userDetails.getId(),
+                userDetails.getUsername(),
+                userDetails.getEmail(),
+                userDetails.getRole());
     }
-    
+
     public JwtResponse googleLogin(GoogleLoginRequest googleRequest) {
         // Check if user exists
         User user = userRepository.findByEmail(googleRequest.getEmail()).orElse(null);
-        
+
         if (user == null) {
             // Register new user
             user = new User();
@@ -83,39 +98,39 @@ public class AuthService {
             user.setGoogleId(googleRequest.getGoogleId());
             userRepository.save(user);
         }
-        
+
         // Generate Token
         String jwt = jwtUtils.generateJwtToken(user);
-        
+
         return new JwtResponse(jwt,
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getRole().name());
     }
-    
+
     public void forgotPassword(String email) throws Exception {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new Exception("User not found"));
-        
+
         // Generate simple token
         String token = UUID.randomUUID().toString();
         user.setResetPasswordToken(token);
         user.setResetPasswordExpire(new Date(System.currentTimeMillis() + 3600000)); // 1 hour
         userRepository.save(user);
-        
+
         // Simulating email sending logic here
         System.out.println("Reset Token for " + email + ": " + token);
     }
-    
+
     public void resetPassword(String token, String newPassword) throws Exception {
         User user = userRepository.findByResetPasswordToken(token)
                 .orElseThrow(() -> new Exception("Invalid token"));
-        
+
         if (user.getResetPasswordExpire().before(new Date())) {
             throw new Exception("Token expired");
         }
-        
+
         user.setPassword(encoder.encode(newPassword));
         user.setResetPasswordToken(null);
         user.setResetPasswordExpire(null);

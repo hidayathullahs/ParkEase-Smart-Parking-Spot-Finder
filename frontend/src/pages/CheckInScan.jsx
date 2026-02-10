@@ -23,7 +23,7 @@ const CheckInScan = () => {
             // Re-using getBookingById. Ideally provider should have access.
             // If getBookingById is restricted to own booking, this might fail unless provider is admin or owns the spot.
             // For MVP, assuming getBookingById allows provider/admin to view.
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/bookings/${bookingId}`, config);
+            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/${bookingId}`, config);
             setBookingDetails(data);
         } catch (err) {
             setError(err.response?.data?.message || 'Booking not found');
@@ -35,11 +35,11 @@ const CheckInScan = () => {
             const userInfo = JSON.parse(localStorage.getItem('userInfo'));
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/bookings/${bookingId}/${action}`, {}, config);
+            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/${bookingId}/${action}`, {}, config);
 
             setSuccessMsg(`Successfully ${action === 'checkin' ? 'Checked In' : 'Checked Out'}!`);
             // Refresh details
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/bookings/${bookingId}`, config);
+            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/${bookingId}`, config);
             setBookingDetails(data);
         } catch (err) {
             setError(err.response?.data?.message || 'Action failed');
