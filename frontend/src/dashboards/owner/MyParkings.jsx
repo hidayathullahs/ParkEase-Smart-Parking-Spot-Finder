@@ -13,12 +13,12 @@ const MyParkings = () => {
 
     const fetchListings = useCallback(async () => {
         setLoading(true);
-        console.log("Fetching listings...", { token: !!token });
+
         try {
             const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            console.log("Listings fetched:", data);
+
             setListings(data || []);
         } catch (error) {
             console.error("Error fetching listings", error);
@@ -32,7 +32,7 @@ const MyParkings = () => {
         if (token) {
             fetchListings();
         } else {
-            console.log("No token found, skipping fetch.");
+
             setLoading(false);
         }
     }, [token, fetchListings]);

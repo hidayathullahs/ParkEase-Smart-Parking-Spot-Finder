@@ -270,7 +270,7 @@ const Home = () => {
             <div className="flex-1 relative">
 
                 {/* Search Bar - Floating Glass Overlay */}
-                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[400] w-full max-w-xl px-4 hidden md:block">
+                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[400] w-[92%] md:w-full max-w-xl px-0 md:px-4">
                     <div className="relative flex items-center bg-white/80 backdrop-blur-xl rounded-full shadow-2xl px-6 py-4 border border-white/40 ring-1 ring-black/5 transition-all hover:scale-[1.01] hover:bg-white/90 group">
                         <Search className="text-gray-500 group-focus-within:text-purple-600 transition-colors" size={20} />
                         <input

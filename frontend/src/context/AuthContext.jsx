@@ -75,8 +75,8 @@ export const AuthProvider = ({ children }) => {
 
                     const { data } = await Promise.race([apiPromise, timeoutPromise]);
                     setUser(data);
-                } catch (error) {
-                    console.error("AuthProvider: Auth check failed:", error.message);
+                } catch {
+                    console.error("AuthProvider: Auth check failed:");
                     logout();
                 }
             } else if (user) {
@@ -87,6 +87,7 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         };
         checkLoggedIn();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const login = async (email, password) => {

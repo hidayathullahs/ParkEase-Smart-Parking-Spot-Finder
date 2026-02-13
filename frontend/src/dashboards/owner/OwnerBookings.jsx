@@ -49,13 +49,17 @@ const OwnerBookings = () => {
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                                     <User size={14} />
-                                    <span>User ID: {booking.userId?.name || booking.userId}</span>
+                                    <span>
+                                        {typeof booking.userId === 'object' && booking.userId !== null
+                                            ? (booking.userId.name || booking.userId.email || booking.userId.id || 'Unknown User')
+                                            : (booking.userId || 'Unknown User')}
+                                    </span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${booking.status === 'BOOKED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                        booking.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                            'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                    booking.status === 'CANCELLED' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                        'bg-gray-500/10 text-gray-400 border-gray-500/20'
                                     }`}>
                                     {booking.status}
                                 </div>

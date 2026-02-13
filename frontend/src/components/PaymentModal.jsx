@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, CreditCard, Lock, CheckCircle, Loader } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, CreditCard, Calendar, Lock, CheckCircle, Loader } from 'lucide-react';
 
 const PaymentModal = ({ isOpen, onClose, amount, onConfirm }) => {
     const [step, setStep] = useState('input'); // input, processing, success
@@ -11,12 +10,12 @@ const PaymentModal = ({ isOpen, onClose, amount, onConfirm }) => {
         name: ''
     });
 
-    useEffect(() => {
-        if (isOpen) {
-            setStep('input');
-            setCardDetails({ number: '', expiry: '', cvc: '', name: '' });
-        }
-    }, [isOpen]);
+    // Reset state when closing
+    const handleClose = () => {
+        setStep('input');
+        setCardDetails({ number: '', expiry: '', cvc: '', name: '' });
+        onClose();
+    };
 
     const handleProcess = async (e) => {
         e.preventDefault();
@@ -31,12 +30,12 @@ const PaymentModal = ({ isOpen, onClose, amount, onConfirm }) => {
 
             // Close after showing success message
             setTimeout(() => {
-                onClose();
+                handleClose();
             }, 2000);
         } catch (error) {
             // If booking failed (e.g. no slots), close immediately
             console.error("Payment processing failed:", error);
-            onClose();
+            handleClose();
         }
     };
 

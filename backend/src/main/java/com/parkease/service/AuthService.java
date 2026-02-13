@@ -120,7 +120,7 @@ public class AuthService {
         userRepository.save(user);
 
         // Simulating email sending logic here
-        System.out.println("Reset Token for " + email + ": " + token);
+
     }
 
     public void resetPassword(String token, String newPassword) throws Exception {

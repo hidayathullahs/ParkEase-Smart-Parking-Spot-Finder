@@ -82,4 +82,23 @@ public class AdminController {
                 Map.of("name", "Jun", "users", 1100, "revenue", 38000));
         return ResponseEntity.ok(data);
     }
+
+    @Autowired
+    org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody Map<String, Object> updates) {
+        com.parkease.model.User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (updates.containsKey("password")) {
+            user.setPassword(passwordEncoder.encode((String) updates.get("password")));
+        }
+        if (updates.containsKey("name")) {
+            user.setName((String) updates.get("name"));
+        }
+        // ... add other fields if needed
+
+        return ResponseEntity.ok(userRepository.save(user));
+    }
 }
