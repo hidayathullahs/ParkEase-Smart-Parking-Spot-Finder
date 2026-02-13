@@ -222,7 +222,7 @@ const DriverDashboard = () => {
                     {/* Top Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <TodayPanel />
-                        <StatsCard index={1} title="Wallet Balance" value="₹2,450" subtext="+15% this month" icon={CreditCard} gradient="from-indigo-600/20 to-blue-900/20" />
+                        <StatsCard index={1} title="Wallet Balance" value={`₹${user?.walletBalance?.toFixed(2) || '0.00'}`} subtext="Available Funds" icon={CreditCard} gradient="from-indigo-600/20 to-blue-900/20" />
                         <StatsCard index={2} title="ParkPoints™" value="1,250" subtext="250 pts to reward" icon={Gift} gradient="from-amber-600/20 to-orange-900/20" />
                     </div>
 

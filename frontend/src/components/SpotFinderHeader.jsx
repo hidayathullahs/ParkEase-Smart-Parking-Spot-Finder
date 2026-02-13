@@ -1,15 +1,25 @@
-import React from 'react';
-import { Filter, Car, Bike, Bus, Zap, Accessibility, Grid, Map as MapIcon, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Filter, Car, Bike, Bus, Zap, Accessibility, Grid, Map as MapIcon, User, ArrowLeft } from 'lucide-react';
 
 const SpotFinderHeader = ({ viewMode, setViewMode }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="absolute top-0 left-0 right-0 z-[1000] bg-[#1a1f2e] text-white px-6 py-3 flex items-center justify-between shadow-xl border-b border-white/5">
             {/* Logo Section */}
-            <div>
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-                    Spot Finder
-                </h1>
-                <p className="text-[10px] text-gray-400 tracking-wider uppercase">Live Updates Active</p>
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                >
+                    <ArrowLeft size={20} />
+                </button>
+                <div>
+                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                        Spot Finder
+                    </h1>
+                    <p className="text-[10px] text-gray-400 tracking-wider uppercase">Live Updates Active</p>
+                </div>
             </div>
 
             {/* Filters Section - Hidden on Mobile, Visible on Desktop */}

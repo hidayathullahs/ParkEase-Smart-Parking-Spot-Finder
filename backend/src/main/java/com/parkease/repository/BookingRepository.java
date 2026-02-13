@@ -13,6 +13,9 @@ import java.util.Optional;
 public interface BookingRepository extends JpaRepository<Booking, String> {
     Optional<Booking> findByBookingId(String bookingId);
 
+    @org.springframework.data.jpa.repository.Query("SELECT b FROM Booking b WHERE b.userId.id = ?1")
+    List<Booking> findByUserId(String userId);
+
     List<Booking> findByUserIdId(String userId);
 
     List<Booking> findByParkingIdId(String parkingId);

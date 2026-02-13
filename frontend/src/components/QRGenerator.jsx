@@ -1,6 +1,6 @@
 import React from 'react';
-import { AnimatePresence } from 'framer-motion';
-import { X, Download, Share2, CheckCircle, Smartphone } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Download, Share2, CheckCircle, Smartphone, Navigation } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 
 const QRGenerator = ({ isOpen, onClose, booking }) => {
@@ -135,21 +135,36 @@ const QRGenerator = ({ isOpen, onClose, booking }) => {
                         </div>
 
                         {/* Actions */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-3">
                             <button
-                                onClick={handleDownload}
-                                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all"
+                                onClick={() => {
+                                    if (booking.location) {
+                                        const { lat, lng } = booking.location;
+                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+                                    }
+                                }}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/30"
                             >
-                                <Download size={18} />
-                                Download
+                                <Navigation size={18} />
+                                Navigate to Parking
                             </button>
-                            <button
-                                onClick={handleShare}
-                                className="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/30"
-                            >
-                                <Share2 size={18} />
-                                Share
-                            </button>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={handleDownload}
+                                    className="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all"
+                                >
+                                    <Download size={18} />
+                                    Download
+                                </button>
+                                <button
+                                    onClick={handleShare}
+                                    className="bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-600/30"
+                                >
+                                    <Share2 size={18} />
+                                    Share
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </motion.div>

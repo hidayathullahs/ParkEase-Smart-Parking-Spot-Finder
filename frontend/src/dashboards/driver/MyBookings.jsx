@@ -15,6 +15,7 @@ const MyBookings = () => {
             // but if there was a specific "data access" fix intended, it's not clear from the snippet.
             // For now, retaining the original correct logic for fetching tickets.
             const res = await getMyTickets();
+            console.log("MyBookings Tickets:", res.data);
             setTickets(res.data || []);
         } catch (error) {
             console.error(error);

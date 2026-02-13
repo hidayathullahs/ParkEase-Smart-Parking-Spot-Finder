@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, register, googleLogin, logout, loading }}>
+        <AuthContext.Provider value={{ user, setUser, token, login, register, googleLogin, logout, loading }}>
             {loading ? (
                 <div className="min-h-screen bg-black text-white flex items-center justify-center">
                     <div className="text-center">

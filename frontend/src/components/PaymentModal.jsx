@@ -22,14 +22,22 @@ const PaymentModal = ({ isOpen, onClose, amount, onConfirm }) => {
         e.preventDefault();
         setStep('processing');
 
-        // Simulate API delay
-        setTimeout(() => {
+        try {
+            // Trigger actual booking and wait for it
+            await onConfirm();
+
+            // Only show success if booking succeeded
             setStep('success');
+
+            // Close after showing success message
             setTimeout(() => {
-                onConfirm(); // Trigger actual booking
-                // onClose(); // Let parent close it
-            }, 1000);
-        }, 2000);
+                onClose();
+            }, 2000);
+        } catch (error) {
+            // If booking failed (e.g. no slots), close immediately
+            console.error("Payment processing failed:", error);
+            onClose();
+        }
     };
 
     if (!isOpen) return null;

@@ -9,13 +9,19 @@ import com.parkease.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
+@Transactional
 public class BookingService {
+    private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
+
     @Autowired
     BookingRepository bookingRepository;
 
@@ -43,13 +49,6 @@ public class BookingService {
                         BookingStatus.CANCELLED // Ignore cancelled
                 );
 
-        // Refine Overlap Check: We need to check Capacity!
-        // The simple overlap above implies capacity is 1. If capacity > 1, we count
-        // overlaps.
-        // For simplicity now, let's assume if there are overlapping bookings >= total
-        // spots, we block.
-        // We need to know specific vehicle capacity.
-
         int capacity = getCapacityForType(parking, request.getVehicleType());
         if (overlapping.size() >= capacity) {
             throw new RuntimeException("No slots available for this time range.");
@@ -71,7 +70,8 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.BOOKED);
 
-        Booking savedBooking = bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.saveAndFlush(booking);
+        logger.info("DEBUG: Created booking {} for user {}", savedBooking.getBookingId(), user.getId());
 
         // 3. Create Transaction (Mock Payment)
         Transaction transaction = new Transaction();
@@ -89,22 +89,24 @@ public class BookingService {
     }
 
     private int getCapacityForType(ParkingListing parking, VehicleType type) {
-        switch (type) {
-            case TWO_WHEELER:
-                return parking.getVehicleCapacity().getTwoWheeler();
-            case FOUR_SEATER:
-                return parking.getVehicleCapacity().getCar4Seater();
-            case SIX_SEATER:
-                return parking.getVehicleCapacity().getCar6Seater();
-            case SUV:
-                return parking.getVehicleCapacity().getSuv();
-            default:
-                return parking.getApproxTotalCars();
+        if (type == VehicleType.TWO_WHEELER) {
+            return parking.getVehicleCapacity().getTwoWheeler();
+        } else if (type == VehicleType.FOUR_SEATER) {
+            return parking.getVehicleCapacity().getCar4Seater();
+        } else if (type == VehicleType.SIX_SEATER) {
+            return parking.getVehicleCapacity().getCar6Seater();
+        } else if (type == VehicleType.SUV) {
+            return parking.getVehicleCapacity().getSuv();
+        } else {
+            return parking.getApproxTotalCars();
         }
     }
 
     public List<Booking> getMyBookings(String userId) {
-        return bookingRepository.findByUserIdId(userId);
+        logger.info("DEBUG: Fetching bookings for user ID: {}", userId);
+        List<Booking> bookings = bookingRepository.findByUserId(userId);
+        logger.info("DEBUG: Found {} bookings.", bookings.size());
+        return bookings;
     }
 
     public List<Booking> getProviderBookings(String providerId) {

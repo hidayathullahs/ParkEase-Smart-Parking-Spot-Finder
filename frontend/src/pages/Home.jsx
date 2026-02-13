@@ -16,6 +16,7 @@ import PaymentModal from '../components/PaymentModal';
 import NavigationOverlay from '../components/NavigationOverlay';
 import QRGenerator from '../components/QRGenerator';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 // Fix for default Leaflet marker icons
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -71,7 +72,7 @@ const Home = () => {
     const [currentBooking, setCurrentBooking] = useState(null);
     const [navDestination, setNavDestination] = useState(null); // For Navigation Overlay
     const { addToast } = useToast();
-    const [user] = useState(JSON.parse(localStorage.getItem('userInfo')));
+    const { token } = useAuth(); // REPLACED: const { user, token } = useAuth();
 
     useEffect(() => {
         const socket = io(import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5002');
@@ -200,6 +201,11 @@ const Home = () => {
     };
 
     const handleReserveClick = (spot) => {
+        if (!token) {
+            addToast("Please login to book a spot", "error");
+            navigate('/login');
+            return;
+        }
         setSelectedSpot(spot);
         setIsBookingOpen(true);
     };
@@ -218,7 +224,7 @@ const Home = () => {
         try {
             const config = {
                 headers: {
-                    Authorization: `Bearer ${user?.token}`,
+                    Authorization: `Bearer ${token}`, // Use token from context
                     'Content-Type': 'application/json'
                 },
             };
@@ -234,19 +240,21 @@ const Home = () => {
             const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings`, bookingData, config);
 
             addToast(`Booking Confirmed for ${selectedSpot.name}!`, 'success');
-            setIsPaymentOpen(false);
+            // setIsPaymentOpen(false); // Handled by PaymentModal on success
 
             // Show QR Ticket
             setCurrentBooking({
                 ...data,
                 bookingId: data.id || data.bookingId || `BK-${Date.now()}`,
                 parkingName: selectedSpot.name,
-                amount: selectedSpot.pricing?.hourlyRate * 2 || 50
+                amount: selectedSpot.pricing?.hourlyRate * 2 || 50,
+                location: selectedSpot.location
             });
             setIsQROpen(true);
         } catch (error) {
             console.error(error);
             addToast(error.response?.data?.message || 'Booking failed', 'error');
+            throw error; // Re-throw so PaymentModal knows it failed
         }
     };
 
@@ -254,25 +262,15 @@ const Home = () => {
         <div className="h-screen w-full flex flex-col relative bg-[#0f1219] overflow-hidden">
 
             {/* Header */}
-            <div className="md:hidden">
-                <SpotFinderHeader viewMode={viewMode} setViewMode={setViewMode} />
-            </div>
+            <SpotFinderHeader viewMode={viewMode} setViewMode={setViewMode} />
 
-            {/* Back Button (Desktop) */}
-            {/* Back Button (Desktop) - High Visibility */}
-            <button
-                onClick={() => navigate(-1)}
-                className="absolute top-6 left-6 z-[400] bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-all border-2 border-white/20 shadow-2xl group"
-                aria-label="Go Back"
-            >
-                <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
-            </button>
+            {/* Back Button (Desktop) - Removed as it's now in Header */}
 
             {/* Main Content Area */}
             <div className="flex-1 relative">
 
                 {/* Search Bar - Floating Glass Overlay */}
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[400] w-full max-w-xl px-4 hidden md:block">
+                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[400] w-full max-w-xl px-4 hidden md:block">
                     <div className="relative flex items-center bg-white/80 backdrop-blur-xl rounded-full shadow-2xl px-6 py-4 border border-white/40 ring-1 ring-black/5 transition-all hover:scale-[1.01] hover:bg-white/90 group">
                         <Search className="text-gray-500 group-focus-within:text-purple-600 transition-colors" size={20} />
                         <input
@@ -369,9 +367,89 @@ const Home = () => {
                         </MapContainer>
                     </div>
                 ) : (
-                    <div className="p-20 text-white text-center">
-                        <h2 className="text-2xl font-bold">List View</h2>
-                        <p className="text-gray-400">List view implementation pending...</p>
+                    <div className="h-full w-full overflow-y-auto bg-[#0f1219] p-4 pt-20 pb-32">
+                        <div className="max-w-7xl mx-auto">
+                            <h2 className="text-2xl font-bold text-white mb-6">Available Spots ({filteredSpots.length})</h2>
+
+                            {filteredSpots.length === 0 ? (
+                                <div className="text-center py-20">
+                                    <div className="bg-white/5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                                        <Search className="text-gray-500" size={32} />
+                                    </div>
+                                    <h3 className="text-white text-lg font-semibold">No spots found</h3>
+                                    <p className="text-gray-400">Try adjusting your filters or search area</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {filteredSpots.map((spot) => (
+                                        <div key={spot.id} className="bg-[#1a1f2e] border border-white/5 rounded-2xl overflow-hidden hover:border-white/10 transition-all group">
+                                            {/* Image Placeholder or Map Preview */}
+                                            <div className="h-48 bg-[#131722] relative overflow-hidden">
+                                                <div className="absolute inset-0 bg-gradient-to-t from-[#1a1f2e] to-transparent z-10"></div>
+                                                {/* You could add a mini map here or a placeholder image */}
+                                                <div className="w-full h-full flex items-center justify-center text-gray-600">
+                                                    <MapPin size={48} className="opacity-20" />
+                                                </div>
+
+                                                <div className="absolute top-3 right-3 z-20">
+                                                    <span className="bg-[#1c3a2f] text-[#34d399] text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase border border-[#34d399]/20">
+                                                        {spot.status || 'AVAILABLE'}
+                                                    </span>
+                                                </div>
+
+                                                <div className="absolute bottom-3 left-3 z-20">
+                                                    <h3 className="text-white font-bold text-lg leading-tight">{spot.name}</h3>
+                                                    <p className="text-gray-400 text-xs truncate max-w-[200px]">{spot.addressLine}, {spot.city}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4">
+                                                <div className="flex justify-between items-end mb-4">
+                                                    <div>
+                                                        <p className="text-gray-400 text-xs uppercase tracking-wider font-bold mb-1">Price</p>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-2xl font-bold text-white">₹{spot.pricing?.hourlyRate}</span>
+                                                            <span className="text-sm text-gray-500">/hr</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {userLocation && spot.location && (
+                                                        <div className="text-right">
+                                                            <p className="text-gray-400 text-xs uppercase tracking-wider font-bold mb-1">Distance</p>
+                                                            <span className="text-blue-400 font-bold">
+                                                                {(() => {
+                                                                    const dist = Math.sqrt(
+                                                                        Math.pow(spot.location.lat - userLocation[0], 2) +
+                                                                        Math.pow(spot.location.lng - userLocation[1], 2)
+                                                                    ) * 111; // Approx km
+                                                                    return dist.toFixed(1);
+                                                                })()} km
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <button
+                                                        onClick={() => handleShowRoute(spot)}
+                                                        className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                                                    >
+                                                        <Navigation size={16} />
+                                                        Route
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleReserveClick(spot)}
+                                                        className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-600/20 transition-all"
+                                                    >
+                                                        Book Now
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 

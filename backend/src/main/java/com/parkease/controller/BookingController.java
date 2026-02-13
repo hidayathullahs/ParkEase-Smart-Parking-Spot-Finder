@@ -21,7 +21,7 @@ public class BookingController {
     BookingService bookingService;
 
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         UserDetailsImpl user = (UserDetailsImpl) userDetails;
@@ -33,7 +33,7 @@ public class BookingController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<?> getMyBookings(@AuthenticationPrincipal UserDetails userDetails) {
         UserDetailsImpl user = (UserDetailsImpl) userDetails;
         return ResponseEntity.ok(bookingService.getMyBookings(user.getId()));
@@ -46,7 +46,7 @@ public class BookingController {
 
     // Provider Scan API
     @PostMapping("/scan")
-    @PreAuthorize("hasRole('PROVIDER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_PROVIDER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> scanBooking(@RequestBody Map<String, String> body) {
         String bookingId = body.get("bookingId");
         try {
@@ -57,14 +57,14 @@ public class BookingController {
     }
 
     @GetMapping("/provider")
-    @PreAuthorize("hasRole('PROVIDER')")
+    @PreAuthorize("hasAuthority('ROLE_PROVIDER')")
     public ResponseEntity<?> getProviderBookings(@AuthenticationPrincipal UserDetails userDetails) {
         UserDetailsImpl user = (UserDetailsImpl) userDetails;
         return ResponseEntity.ok(bookingService.getProviderBookings(user.getId()));
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('PROVIDER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_PROVIDER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {
         BookingStatus status = BookingStatus.valueOf(body.get("status"));
         return ResponseEntity.ok(bookingService.updateStatus(id, status));
