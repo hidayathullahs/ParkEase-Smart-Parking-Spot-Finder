@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, User, Mail, Lock, Eye, EyeOff, Sun, Moon } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 
@@ -16,6 +17,7 @@ const Register = () => {
 
     const { register, googleLogin } = useAuth() || {};
     const { theme, toggleTheme } = useTheme();
+    const { addToast } = useToast();
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -24,7 +26,12 @@ const Register = () => {
             return;
         }
         const res = await register(name, email, password, role);
-        if (!res.success) setError(res.message);
+        if (!res.success) {
+            setError(res.message);
+            addToast(res.message, 'error');
+        } else {
+            addToast('Registration Successful!', 'success');
+        }
     };
 
     return (

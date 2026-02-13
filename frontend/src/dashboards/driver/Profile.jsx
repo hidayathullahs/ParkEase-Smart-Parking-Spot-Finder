@@ -22,13 +22,23 @@ const Profile = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        // Fetch latest profile data to sync wallet/vehicles
         const fetchProfile = async () => {
-            // In a real app, GET /me here.
-            // For now we rely on the updated user obj from updates or login
-            // We can assume user object in local storage might be stale if we don't refresh it
-            // but `updateProfile` returns the fresh object.
+            try {
+                const config = {
+                    headers: {
+                        Authorization: `Bearer ${user.token}`,
+                    },
+                };
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/me`, config);
+                setUser(prev => ({ ...prev, ...data })); // Merge with existing token
+                localStorage.setItem('userInfo', JSON.stringify({ ...user, ...data }));
+                setVehicles(data.vehicles || []);
+            } catch (error) {
+                console.error("Failed to fetch profile", error);
+            }
         };
+        fetchProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSubmit = async (e) => {

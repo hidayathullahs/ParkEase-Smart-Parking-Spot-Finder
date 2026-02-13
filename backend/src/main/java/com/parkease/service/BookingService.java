@@ -5,6 +5,7 @@ import com.parkease.model.*;
 import com.parkease.repository.BookingRepository;
 import com.parkease.repository.ParkingListingRepository;
 import com.parkease.repository.UserRepository;
+import com.parkease.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,9 @@ public class BookingService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    TransactionRepository transactionRepository;
+
     public Booking createBooking(BookingRequest request, String userId) {
         // 1. Check Parking exists
         ParkingListing parking = parkingListingRepository.findById(request.getParkingId())
@@ -42,7 +46,6 @@ public class BookingService {
         // Refine Overlap Check: We need to check Capacity!
         // The simple overlap above implies capacity is 1. If capacity > 1, we count
         // overlaps.
-
         // For simplicity now, let's assume if there are overlapping bookings >= total
         // spots, we block.
         // We need to know specific vehicle capacity.
@@ -68,7 +71,21 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.BOOKED);
 
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // 3. Create Transaction (Mock Payment)
+        Transaction transaction = new Transaction();
+        transaction.setUser(user);
+        transaction.setBooking(savedBooking);
+        transaction.setAmount(request.getTotalAmount());
+        transaction.setPaymentMethod("CARD"); // Default for now
+        transaction.setStatus("SUCCESS");
+        transaction.setTransactionReference("TXN-" + UUID.randomUUID().toString().substring(0, 10).toUpperCase());
+        transaction.setTimestamp(new Date());
+
+        transactionRepository.save(transaction);
+
+        return savedBooking;
     }
 
     private int getCapacityForType(ParkingListing parking, VehicleType type) {

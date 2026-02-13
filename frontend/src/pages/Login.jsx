@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
+import { useToast } from '../context/ToastContext';
 import { ArrowLeft, User, Lock, Mail, Eye, EyeOff, Sun, Moon } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
+import { motion } from 'framer-motion';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ const Login = () => {
 
     const { login, googleLogin } = useAuth() || {};
     const { theme, toggleTheme } = useTheme();
-    const navigate = useNavigate();
+    const { addToast } = useToast();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -26,9 +27,16 @@ const Login = () => {
         }
         try {
             const res = await login(email, password);
-            if (!res.success) setError(res.message);
-        } catch (err) {
+            if (!res.success) {
+                setError(res.message);
+                addToast(res.message, 'error');
+            } else {
+                addToast('Login Successful!', 'success');
+            }
+        } catch (error) {
+            console.error(error);
             setError("Login failed. Please try again.");
+            addToast("Login failed.", 'error');
         }
     };
 
@@ -88,9 +96,9 @@ const Login = () => {
                 </div>
 
                 {error && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-3 rounded-xl mb-6 text-sm text-center">
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-3 rounded-xl mb-6 text-sm text-center">
                         {error}
-                    </motion.div>
+                    </div>
                 )}
 
                 <form onSubmit={handleLogin} className="space-y-5">

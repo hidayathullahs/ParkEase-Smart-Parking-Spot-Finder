@@ -12,7 +12,10 @@ import MagicFind from '../components/MagicFind';
 import AIChatbot from '../components/AIChatbot';
 import SpotFinderHeader from '../components/SpotFinderHeader';
 import BookingDrawer from '../components/BookingDrawer';
+import PaymentModal from '../components/PaymentModal';
 import NavigationOverlay from '../components/NavigationOverlay';
+import QRGenerator from '../components/QRGenerator';
+import { useToast } from '../context/ToastContext';
 
 // Fix for default Leaflet marker icons
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -46,25 +49,29 @@ function RecenterMap({ center }) {
     const map = useMap();
     useEffect(() => {
         map.flyTo(center, 16, { animate: true, duration: 1.5 });
-    }, [center]);
+    }, [center, map]);
     return null;
 }
 
 const Home = () => {
     const navigate = useNavigate();
     const [parkingSpots, setParkingSpots] = useState([]);
-    const [filteredSpots, setFilteredSpots] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     // const [loading, setLoading] = useState(true); // Unused
     const [userLocation, setUserLocation] = useState(null);
     const [center, setCenter] = useState([12.9716, 77.5946]); // Default: Bangalore
-    const [sortType, setSortType] = useState(null); // Added sort state
+    const [sortType, setSortType] = useState(null); // Added sort state setter
 
     // UI State
     const [viewMode, setViewMode] = useState('map'); // 'map' or 'list'
     const [selectedSpot, setSelectedSpot] = useState(null); // For Booking Drawer
     const [isBookingOpen, setIsBookingOpen] = useState(false);
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+    const [isQROpen, setIsQROpen] = useState(false);
+    const [currentBooking, setCurrentBooking] = useState(null);
     const [navDestination, setNavDestination] = useState(null); // For Navigation Overlay
+    const { addToast } = useToast();
+    const [user] = useState(JSON.parse(localStorage.getItem('userInfo')));
 
     useEffect(() => {
         const socket = io(import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5002');
@@ -72,7 +79,6 @@ const Home = () => {
             axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/parkings`)
                 .then(({ data }) => {
                     setParkingSpots(data);
-                    // Re-apply current filters if needed, but simple re-fetch is okay
                 });
         });
         return () => socket.disconnect();
@@ -85,7 +91,6 @@ const Home = () => {
                 // Fetch approved parkings from backend
                 const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/parkings`);
                 setParkingSpots(data);
-                setFilteredSpots(data); // Initial set
             } catch (error) {
                 console.error("Error fetching parkings", error);
             }
@@ -104,17 +109,17 @@ const Home = () => {
         }
     }, []);
 
-    // Unified Filter & Sort Logic
-    useEffect(() => {
+    // Unified Filter & Sort Logic (useMemo)
+    const filteredSpots = React.useMemo(() => {
         let result = [...parkingSpots];
 
         // 1. Filter
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
             result = result.filter(spot =>
-                spot.name.toLowerCase().includes(lowerQuery) ||
-                spot.address.toLowerCase().includes(lowerQuery) ||
-                spot.city.toLowerCase().includes(lowerQuery)
+                (spot.title?.toLowerCase().includes(lowerQuery) || false) ||
+                (spot.addressLine?.toLowerCase().includes(lowerQuery) || false) ||
+                (spot.city?.toLowerCase().includes(lowerQuery) || false)
             );
         }
 
@@ -137,14 +142,27 @@ const Home = () => {
                 result.sort((a, b) => getDist(a) - getDist(b));
             }
         }
-
-        setFilteredSpots(result);
+        return result;
     }, [searchQuery, parkingSpots, sortType, userLocation]);
 
     // Magic Sort Logic
     const handleMagicSort = (type) => {
+        setSortType(type);
+
         // Immediate visual feedback computing
-        let potentialSorted = [...filteredSpots];
+        // Since filteredSpots is memoized and won't update until next render, we re-calculate
+        // the top result here just for the purpose of centering the map.
+        let potentialSorted = [...(parkingSpots || [])];
+
+        // Apply current search filter first
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            potentialSorted = potentialSorted.filter(spot =>
+                (spot.title?.toLowerCase().includes(lowerQuery) || false) ||
+                (spot.addressLine?.toLowerCase().includes(lowerQuery) || false) ||
+                (spot.city?.toLowerCase().includes(lowerQuery) || false)
+            );
+        }
 
         if (type === 'cheapest') {
             potentialSorted.sort((a, b) => {
@@ -164,19 +182,14 @@ const Home = () => {
                 const { lat, lng } = spot.location;
                 return Math.sqrt(Math.pow(lat - userLocation[0], 2) + Math.pow(lng - userLocation[1], 2));
             };
-            sorted.sort((a, b) => getDist(a) - getDist(b));
+            potentialSorted.sort((a, b) => getDist(a) - getDist(b));
         }
-
-        setFilteredSpots(potentialSorted);
 
         // Visual Feedback: Fly to top result
         if (potentialSorted.length > 0) {
             const bestSpot = potentialSorted[0];
             if (bestSpot.location) {
                 setCenter([bestSpot.location.lat, bestSpot.location.lng]);
-                setSelectedSpot(bestSpot); // This might open the drawer, or we can use it to open popup
-                // To open popup, we might need a ref or controlled popup. 
-                // For now, centering is good feedback.
             }
         }
     };
@@ -197,9 +210,44 @@ const Home = () => {
     };
 
     const handleConfirmBooking = () => {
-        // console.log("Booking Confirmed for:", selectedSpot);
-        alert(`Booking Confirmed for ${selectedSpot.name}!`);
         setIsBookingOpen(false);
+        setIsPaymentOpen(true);
+    };
+
+    const handlePaymentSuccess = async () => {
+        try {
+            const config = {
+                headers: {
+                    Authorization: `Bearer ${user?.token}`,
+                    'Content-Type': 'application/json'
+                },
+            };
+
+            const bookingData = {
+                parkingId: selectedSpot.id,
+                startTime: new Date(),
+                endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // Default 2 hours
+                totalAmount: selectedSpot.pricing?.hourlyRate * 2 || 50,
+                vehicleType: 'FOUR_SEATER'
+            };
+
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings`, bookingData, config);
+
+            addToast(`Booking Confirmed for ${selectedSpot.name}!`, 'success');
+            setIsPaymentOpen(false);
+
+            // Show QR Ticket
+            setCurrentBooking({
+                ...data,
+                bookingId: data.id || data.bookingId || `BK-${Date.now()}`,
+                parkingName: selectedSpot.name,
+                amount: selectedSpot.pricing?.hourlyRate * 2 || 50
+            });
+            setIsQROpen(true);
+        } catch (error) {
+            console.error(error);
+            addToast(error.response?.data?.message || 'Booking failed', 'error');
+        }
     };
 
     return (
@@ -246,7 +294,8 @@ const Home = () => {
                         <MapContainer center={center} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                             <RecenterMap center={center} />
                             <TileLayer
-                                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                             />
 
                             {/* Navigation Route Line (Simulated) */}
@@ -338,6 +387,19 @@ const Home = () => {
                     isNavigating={!!navDestination}
                     destination={navDestination}
                     onStopNavigation={() => setNavDestination(null)}
+                />
+
+                <PaymentModal
+                    isOpen={isPaymentOpen}
+                    onClose={() => setIsPaymentOpen(false)}
+                    amount={selectedSpot?.pricing?.hourlyRate * 2 || 50}
+                    onConfirm={handlePaymentSuccess}
+                />
+
+                <QRGenerator
+                    isOpen={isQROpen}
+                    onClose={() => setIsQROpen(false)}
+                    booking={currentBooking}
                 />
 
                 {/* Magic Find Button (Smart Sort) */}

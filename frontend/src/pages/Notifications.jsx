@@ -7,7 +7,7 @@ export default function Notifications() {
 
     const fetchAll = async () => {
         const res = await getNotifications();
-        setList(res.data.list || []);
+        setList(res.data || []);
     };
 
     useEffect(() => {
@@ -49,10 +49,10 @@ export default function Notifications() {
                     ) : (
                         list.map((n) => (
                             <div
-                                key={n._id}
+                                key={n.id}
                                 className={`rounded-2xl border p-4 ${n.read
-                                        ? "bg-white/5 border-white/10"
-                                        : "bg-blue-600/10 border-blue-500/30"
+                                    ? "bg-white/5 border-white/10"
+                                    : "bg-blue-600/10 border-blue-500/30"
                                     }`}
                             >
                                 <div className="flex justify-between gap-3">
@@ -66,7 +66,7 @@ export default function Notifications() {
 
                                     {!n.read && (
                                         <button
-                                            onClick={() => handleMarkRead(n._id)}
+                                            onClick={() => handleMarkRead(n.id)}
                                             className="h-fit px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10"
                                         >
                                             Mark read

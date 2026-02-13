@@ -3,15 +3,15 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002/api';
 
 const getAuthHeader = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.token) {
-        return { Authorization: `Bearer ${user.token}` };
+    const token = localStorage.getItem('token');
+    if (token) {
+        return { Authorization: `Bearer ${token}` };
     }
     return {};
 };
 
 const getDashboardStats = async () => {
-    const response = await axios.get(`${API_URL}/provider/dashboard`, { headers: getAuthHeader() });
+    const response = await axios.get(`${API_URL}/provider/stats`, { headers: getAuthHeader() });
     return response.data;
 };
 
@@ -21,7 +21,7 @@ const getMyListings = async () => {
 };
 
 const getProviderBookings = async () => {
-    const response = await axios.get(`${API_URL}/provider/bookings`, { headers: getAuthHeader() });
+    const response = await axios.get(`${API_URL}/bookings/provider`, { headers: getAuthHeader() });
     return response.data;
 };
 

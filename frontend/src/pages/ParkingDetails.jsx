@@ -92,13 +92,13 @@ export default function ParkingDetails() {
         setBookingLoading(true);
         try {
             const payload = {
-                parkingId: parking._id,
+                parkingId: parking.id,
                 startTime,
                 endTime,
                 vehicleType,
             };
             const res = await createBooking(payload);
-            setMsg(`Booking Successful ✅ Ticket: ${res.data.booking.bookingId}`);
+            setMsg(`Booking Successful ✅ Ticket: ${res.data.bookingId}`);
 
             // Close modal after brief success msg
             setTimeout(() => {

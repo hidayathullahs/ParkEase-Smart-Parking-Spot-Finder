@@ -18,7 +18,7 @@ export default function History() {
             try {
                 setLoading(true);
                 const res = await getMyHistory();
-                setItems(res.data.bookings || []);
+                setItems(res.data || []);
             } catch (e) {
                 setErr(e?.response?.data?.message || "Failed to load history");
             } finally {
@@ -43,7 +43,7 @@ export default function History() {
                     ) : (
                         items.map((b) => (
                             <div
-                                key={b._id}
+                                key={b.id}
                                 className="rounded-2xl border border-white/10 bg-white/5 p-5 flex flex-col md:flex-row md:items-center gap-4"
                             >
                                 <div className="flex-1">

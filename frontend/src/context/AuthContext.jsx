@@ -16,7 +16,8 @@ export const useAuth = () => {
             login: () => Promise.resolve({ success: false, message: "Auth Error" }),
             register: () => Promise.resolve({ success: false, message: "Auth Error" }),
             googleLogin: () => Promise.resolve({ success: false, message: "Auth Error" }),
-            logout: () => { }
+            logout: () => { },
+            token: null
         };
     }
     return context;
@@ -86,7 +87,7 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         };
         checkLoggedIn();
-    }, [token, user]);
+    }, [token]);
 
     const login = async (email, password) => {
         try {
@@ -105,7 +106,15 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password, role) => {
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/register`, { name, email, password, role });
+            // Map 'DRIVER' (frontend label) to 'USER' (backend enum), or default to 'USER'
+            const validRole = (role === 'DRIVER' || !role) ? 'USER' : role;
+
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/register`, {
+                name,
+                email,
+                password,
+                role: validRole
+            });
 
             if (data.token) {
                 setToken(data.token);
@@ -148,7 +157,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, googleLogin, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, register, googleLogin, logout, loading }}>
             {loading ? (
                 <div className="min-h-screen bg-black text-white flex items-center justify-center">
                     <div className="text-center">

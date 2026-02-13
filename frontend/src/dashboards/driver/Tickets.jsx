@@ -24,7 +24,7 @@ export default function Tickets() {
         try {
             setLoading(true);
             const res = await getMyTickets();
-            setTickets(res.data.bookings || []);
+            setTickets(res.data || []);
         } catch (e) {
             setErr(e?.response?.data?.message || "Failed to fetch tickets");
         } finally {
@@ -56,7 +56,7 @@ export default function Tickets() {
                 <p className="text-white/60 mt-1">Active bookings & QR tickets.</p>
 
                 <div className="mt-6 grid md:grid-cols-2 gap-5">
-                    {tickets.length === 0 ? (
+                    {(!Array.isArray(tickets) || tickets.length === 0) ? (
                         <div className="text-white/70">No active tickets.</div>
                     ) : (
                         tickets.map((t) => {
@@ -71,7 +71,7 @@ export default function Tickets() {
 
                             return (
                                 <div
-                                    key={t._id}
+                                    key={t.id}
                                     className="rounded-2xl border border-white/10 bg-white/5 p-5"
                                 >
                                     <div className="flex items-start justify-between gap-3">
@@ -121,7 +121,7 @@ export default function Tickets() {
 
                                     <div className="mt-4 flex flex-wrap gap-3">
                                         <button
-                                            onClick={() => handleCancel(t._id)}
+                                            onClick={() => handleCancel(t.id)}
                                             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-red-400"
                                         >
                                             Cancel
@@ -130,7 +130,7 @@ export default function Tickets() {
                                         <button
                                             onClick={async () => {
                                                 if (!confirm("Extend by 1 hour?")) return;
-                                                try { await extendBooking(t._id, 1); fetchTickets(); } catch (e) { alert(e.response?.data?.message || "Failed"); }
+                                                try { await extendBooking(t.id, 1); fetchTickets(); } catch (e) { alert(e.response?.data?.message || "Failed"); }
                                             }}
                                             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-blue-300"
                                         >
@@ -140,7 +140,7 @@ export default function Tickets() {
                                         <button
                                             onClick={async () => {
                                                 if (!confirm("Extend by 2 hours?")) return;
-                                                try { await extendBooking(t._id, 2); fetchTickets(); } catch (e) { alert(e.response?.data?.message || "Failed"); }
+                                                try { await extendBooking(t.id, 2); fetchTickets(); } catch (e) { alert(e.response?.data?.message || "Failed"); }
                                             }}
                                             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-blue-300"
                                         >

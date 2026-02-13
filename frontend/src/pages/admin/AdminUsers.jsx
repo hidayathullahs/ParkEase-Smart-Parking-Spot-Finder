@@ -56,7 +56,7 @@ const AdminUsers = () => {
                     </thead>
                     <tbody className="divide-y divide-white/10">
                         {users.map((u) => (
-                            <tr key={u._id} className="hover:bg-white/5 transition">
+                            <tr key={u.id} className="hover:bg-white/5 transition">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white">
@@ -78,7 +78,7 @@ const AdminUsers = () => {
                                 <td className="p-4 text-sm opacity-60">{new Date(u.createdAt).toLocaleDateString()}</td>
                                 <td className="p-4 text-right">
                                     <button
-                                        onClick={() => handleDelete(u._id)}
+                                        onClick={() => handleDelete(u.id)}
                                         className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition"
                                         title="Delete User"
                                     >

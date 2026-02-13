@@ -1,37 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, MapPin, Edit, Truck, Clock, AlertCircle, CheckCircle, Search, Filter } from 'lucide-react';
+import { PlusCircle, MapPin, Edit, Truck, Clock, AlertCircle, CheckCircle, Search, Filter, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-hot-toast';
+import { useCallback } from 'react';
 
 const MyParkings = () => {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const { token } = useAuth();
 
-    useEffect(() => {
-        const fetchListings = async () => {
-            console.log("Fetching listings...", { token: !!token });
-            try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                console.log("Listings fetched:", data);
-                setListings(data || []);
-            } catch (error) {
-                console.error("Error fetching listings", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchListings = useCallback(async () => {
+        setLoading(true);
+        console.log("Fetching listings...", { token: !!token });
+        try {
+            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            console.log("Listings fetched:", data);
+            setListings(data || []);
+        } catch (error) {
+            console.error("Error fetching listings", error);
+            toast.error("Failed to load your parkings");
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
 
+    useEffect(() => {
         if (token) {
             fetchListings();
         } else {
             console.log("No token found, skipping fetch.");
             setLoading(false);
         }
-    }, [token]);
+    }, [token, fetchListings]);
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this parking listing? This action cannot be undone.")) {
+            return;
+        }
+
+        try {
+            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success("Parking spot deleted successfully");
+            fetchListings(); // Refresh the list
+        } catch (error) {
+            console.error("Error deleting listing", error);
+            toast.error("Failed to delete parking spot");
+        }
+    };
 
     const getStatusBadge = (status) => {
         switch (status) {
@@ -117,11 +138,18 @@ const MyParkings = () => {
                                 )}
 
                                 <div className="pt-2 flex gap-2">
-                                    <button className="flex-1 py-2 text-sm font-medium bg-white/5 hover:bg-white/10 rounded-lg transition">
+                                    <Link to={`/owner/edit-parking/${spot.id}`} className="flex-1 py-2 text-sm font-medium bg-white/5 hover:bg-white/10 rounded-lg transition text-center flex items-center justify-center border border-white/5 hover:border-blue-500/30">
                                         Manage
-                                    </button>
-                                    <button className="p-2 bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition">
+                                    </Link>
+                                    <Link to={`/owner/edit-parking/${spot.id}`} className="p-2 bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition border border-blue-500/20" title="Edit Listing">
                                         <Edit size={18} />
+                                    </Link>
+                                    <button
+                                        onClick={() => handleDelete(spot.id)}
+                                        className="p-2 bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white rounded-lg transition border border-red-500/20"
+                                        title="Delete Listing"
+                                    >
+                                        <Trash2 size={18} />
                                     </button>
                                 </div>
                             </div>

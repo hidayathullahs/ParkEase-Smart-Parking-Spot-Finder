@@ -49,12 +49,12 @@ const Favorites = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {favorites.map((spot) => (
-                        <div key={spot._id} className="glass-card group hover:border-red-500/30 transition relative overflow-hidden">
+                        <div key={spot.id} className="glass-card group hover:border-red-500/30 transition relative overflow-hidden">
                             <div className="h-32 bg-gray-800 relative">
                                 <img src={spot.images?.[0] || 'https://via.placeholder.com/400x200'} alt={spot.title} className="w-full h-full object-cover" />
                                 <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-black/60 to-transparent"></div>
                                 <button
-                                    onClick={() => removeFavorite(spot._id)}
+                                    onClick={() => removeFavorite(spot.id)}
                                     className="absolute top-3 right-3 p-2 bg-black/40 hover:bg-red-500/20 rounded-full transition text-white/70 hover:text-red-400 backdrop-blur-sm"
                                 >
                                     <Trash2 size={16} />
@@ -78,7 +78,7 @@ const Favorites = () => {
                                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
                                     <span className="text-green-400 font-bold">₹{spot.pricing?.hourlyRate}/hr</span>
                                     <Link
-                                        to={`/parking/${spot._id}`}
+                                        to={`/parking/${spot.id}`}
                                         className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2"
                                     >
                                         Book Now <Navigation size={14} />

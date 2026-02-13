@@ -101,6 +101,11 @@
   width: auto !important;
 }
 
+.custom-marker {
+  background: none !important;
+  border: none !important;
+}
+
 /* Custom Marker Pulse */
 .pulse-ring {
   position: relative;

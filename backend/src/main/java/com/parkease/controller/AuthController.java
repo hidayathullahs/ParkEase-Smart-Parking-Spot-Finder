@@ -91,4 +91,30 @@ public class AuthController {
         com.parkease.security.UserDetailsImpl userImpl = (com.parkease.security.UserDetailsImpl) userDetails;
         return ResponseEntity.ok(userService.toggleFavorite(userImpl.getId(), id));
     }
+
+    @PostMapping("/wallet/add")
+    public ResponseEntity<?> addFunds(@AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map<String, Double> payload) {
+        com.parkease.security.UserDetailsImpl userImpl = (com.parkease.security.UserDetailsImpl) userDetails;
+        Double amount = payload.get("amount");
+        if (amount == null || amount <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid amount"));
+        }
+        return ResponseEntity.ok(userService.addFunds(userImpl.getId(), amount));
+    }
+
+    @PostMapping("/wallet/withdraw")
+    public ResponseEntity<?> withdrawFunds(@AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map<String, Double> payload) {
+        com.parkease.security.UserDetailsImpl userImpl = (com.parkease.security.UserDetailsImpl) userDetails;
+        Double amount = payload.get("amount");
+        if (amount == null || amount <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid amount"));
+        }
+        try {
+            return ResponseEntity.ok(userService.withdrawFunds(userImpl.getId(), amount));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

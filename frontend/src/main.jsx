@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 
 import { BrowserRouter as Router } from 'react-router-dom';
 
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')).render(
                 <Router>
                     <AuthProvider>
                         <ThemeProvider>
-                            <App />
+                            <ToastProvider>
+                                <App />
+                            </ToastProvider>
                         </ThemeProvider>
                     </AuthProvider>
                 </Router>

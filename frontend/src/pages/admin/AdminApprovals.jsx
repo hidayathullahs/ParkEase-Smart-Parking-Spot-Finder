@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Check, X, MapPin, Ruler, User } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const AdminApprovals = () => {
     const [pendingListings, setPendingListings] = useState([]);
@@ -19,7 +20,7 @@ const AdminApprovals = () => {
             const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/admin/parkings/pending`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setPendingListings(res.data.list || []);
+            setPendingListings(res.data || []);
         } catch (error) {
             console.error(error);
         } finally {
@@ -39,27 +40,29 @@ const AdminApprovals = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Remove from list
-            setPendingListings(prev => prev.filter(item => item._id !== id));
+            setPendingListings(prev => prev.filter(item => item.id !== id));
+            toast.success("Listing approved successfully");
         } catch (error) {
-            alert("Error approving listing");
+            toast.error("Error approving listing");
         } finally {
             setProcessing(null);
         }
     };
 
     const handleReject = async () => {
-        if (!rejectReason) return alert("Please provide a reason");
+        if (!rejectReason) return toast.error("Please provide a reason");
         setProcessing(rejectId);
         try {
             await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/admin/parkings/${rejectId}/reject`, { reason: rejectReason }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Remove from list
-            setPendingListings(prev => prev.filter(item => item._id !== rejectId));
+            setPendingListings(prev => prev.filter(item => item.id !== rejectId));
             setRejectId(null);
             setRejectReason('');
+            toast.success("Listing rejected");
         } catch (error) {
-            alert("Error rejecting listing");
+            toast.error("Error rejecting listing");
         } finally {
             setProcessing(null);
         }
@@ -80,7 +83,7 @@ const AdminApprovals = () => {
             ) : (
                 <div className="grid gap-6">
                     {pendingListings.map(item => (
-                        <div key={item._id} className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col md:flex-row gap-6">
+                        <div key={item.id} className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col md:flex-row gap-6">
                             {/* Image Preview */}
                             <div className="w-full md:w-64 h-48 bg-black/50 rounded-xl overflow-hidden shrink-0">
                                 <img src={item.images?.[0] || 'https://via.placeholder.com/400'} alt="Preview" className="w-full h-full object-cover" />
@@ -125,15 +128,15 @@ const AdminApprovals = () => {
                             {/* Actions */}
                             <div className="flex flex-row md:flex-col gap-3 justify-center min-w-[150px]">
                                 <button
-                                    onClick={() => handleApprove(item._id)}
-                                    disabled={processing === item._id}
+                                    onClick={() => handleApprove(item.id)}
+                                    disabled={processing === item.id}
                                     className="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition"
                                 >
                                     <Check size={18} /> Approve
                                 </button>
                                 <button
-                                    onClick={() => setRejectId(item._id)}
-                                    disabled={processing === item._id}
+                                    onClick={() => setRejectId(item.id)}
+                                    disabled={processing === item.id}
                                     className="bg-red-600/10 hover:bg-red-600 hover:text-white text-red-500 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition border border-red-500/20"
                                 >
                                     <X size={18} /> Reject

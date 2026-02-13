@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Upload, MapPin, Trash } from 'lucide-react';
 
@@ -8,20 +8,60 @@ import { useAuth } from '../context/AuthContext';
 const AddParking = () => {
     const { token } = useAuth();
     const navigate = useNavigate();
+    const { id } = useParams();
     const [formData, setFormData] = useState({
         name: '',
-        address: '', // Check if this maps to addressLine
+        address: '',
         city: '',
         latitude: '',
         longitude: '',
         ownership: 'SELF',
         timings: { from: '08:00', to: '22:00' },
         hourlyRate: '',
-        dimensions: { width: '', length: '', totalArea: '' }, // Changed height to length
+        dimensions: { width: '', length: '', totalArea: '' },
         images: []
     });
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(false);
     const [error, setError] = useState('');
+
+    // Fetch existing data if in Edit mode
+    useEffect(() => {
+        if (id && token) {
+            const fetchListing = async () => {
+                setFetching(true);
+                try {
+                    const res = await axios.get(
+                        `${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings/${id}`,
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    const spot = res.data.parking || res.data;
+                    setFormData({
+                        name: spot.title,
+                        address: spot.addressLine,
+                        city: spot.city,
+                        latitude: spot.location?.lat?.toString() || '',
+                        longitude: spot.location?.lng?.toString() || '',
+                        ownership: spot.ownershipRelation || 'SELF',
+                        timings: { from: spot.availableFrom || '08:00', to: spot.availableTo || '22:00' },
+                        hourlyRate: spot.pricing?.hourlyRate?.toString() || '',
+                        dimensions: {
+                            width: spot.dimensions?.width?.toString() || '',
+                            length: spot.dimensions?.length?.toString() || '',
+                            totalArea: spot.dimensions?.totalArea?.toString() || ''
+                        },
+                        images: spot.images || []
+                    });
+                } catch (err) {
+                    console.error("Fetch error:", err);
+                    setError("Failed to load parking details");
+                } finally {
+                    setFetching(false);
+                }
+            };
+            fetchListing();
+        }
+    }, [id, token]);
 
     // Image Upload Handling
     const [imageUrl, setImageUrl] = useState('');
@@ -53,8 +93,8 @@ const AddParking = () => {
 
         try {
             const payload = {
-                title: formData.name, // Access 'title' in backend? ParkingListing has 'title'.
-                description: "Parking space at " + formData.address, // Populate description
+                title: formData.name,
+                description: "Parking space at " + formData.address,
                 addressLine: formData.address,
                 city: formData.city,
                 location: {
@@ -75,18 +115,26 @@ const AddParking = () => {
                 ownershipRelation: formData.ownership
             };
 
-            await axios.post(
-                `${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`,
+            const url = id
+                ? `${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings/${id}`
+                : `${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`;
+
+            const method = id ? 'put' : 'post';
+
+            await axios[method](
+                url,
                 payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            navigate('/owner/dashboard');
+            navigate('/owner/parkings');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to create parking');
+            setError(err.response?.data?.message || `Failed to ${id ? 'update' : 'create'} parking`);
         } finally {
             setLoading(false);
         }
     };
+
+    if (fetching) return <div className="p-20 text-center text-white">Loading parking details...</div>;
 
     return (
         <div className="p-6 md:p-8 max-w-4xl mx-auto">
@@ -95,7 +143,7 @@ const AddParking = () => {
             </button>
 
             <div className="glass-card p-8 rounded-2xl">
-                <h1 className="text-2xl font-bold mb-6">Add New Parking</h1>
+                <h1 className="text-2xl font-bold mb-6">{id ? 'Edit' : 'Add New'} Parking</h1>
 
                 {error && <div className="bg-red-500/20 text-red-400 p-4 rounded-xl mb-6">{error}</div>}
 
@@ -193,7 +241,7 @@ const AddParking = () => {
                     </div>
 
                     <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-blue-500/20 transition-all transform hover:scale-[1.01]">
-                        {loading ? 'Creating Listing...' : 'Submit Listing'}
+                        {loading ? `${id ? 'Updating' : 'Creating'} Listing...` : `${id ? 'Update' : 'Submit'} Listing`}
                     </button>
                 </form>
             </div>

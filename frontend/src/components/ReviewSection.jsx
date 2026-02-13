@@ -35,8 +35,8 @@ const ReviewSection = ({ reviews, onSubmitReview, user }) => {
                                     <Star
                                         size={24}
                                         className={`${star <= (hoveredStar || rating)
-                                                ? 'fill-yellow-400 text-yellow-400'
-                                                : 'text-gray-600'
+                                            ? 'fill-yellow-400 text-yellow-400'
+                                            : 'text-gray-600'
                                             } transition-colors`}
                                     />
                                 </button>
@@ -69,7 +69,7 @@ const ReviewSection = ({ reviews, onSubmitReview, user }) => {
                     <p className="text-muted-foreground text-center py-4">No reviews yet. Be the first!</p>
                 ) : (
                     reviews.map((review) => (
-                        <div key={review._id} className="glass-card p-6 border border-white/5 animate-in fade-in slide-in-from-bottom-2">
+                        <div key={review.id} className="glass-card p-6 border border-white/5 animate-in fade-in slide-in-from-bottom-2">
                             <div className="flex justify-between items-start mb-2">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden">

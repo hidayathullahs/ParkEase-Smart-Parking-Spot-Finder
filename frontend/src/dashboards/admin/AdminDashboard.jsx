@@ -8,6 +8,7 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import AdminService from '../../services/adminService';
+import { useToast } from '../../context/ToastContext';
 
 // --- ANIMATION VARIANTS ---
 const containerVariants = {
@@ -68,12 +69,15 @@ export default function AdminDashboard() {
     });
     const [pendingListings, setPendingListings] = useState([]);
 
+    const [revenueData, setRevenueData] = useState([]);
+
     const fetchData = async () => {
         try {
-            const [users, pending, systemStats] = await Promise.all([
+            const [, pending, systemStats, revenue] = await Promise.all([
                 AdminService.getAllUsers(),
                 AdminService.getPendingListings(),
-                AdminService.getSystemStats()
+                AdminService.getSystemStats(),
+                AdminService.getRevenueStats()
             ]);
 
             setStats({
@@ -82,24 +86,36 @@ export default function AdminDashboard() {
                 activeParkings: systemStats.activeSpots || 0,
                 totalUsers: systemStats.totalUsers || 0,
                 totalProviders: systemStats.totalProviders || 0,
-                totalBookings: systemStats.totalBookings || 0
+                totalBookings: systemStats.totalBookings || 0,
+                totalRevenue: systemStats.totalRevenue || 0
             });
             setPendingListings(pending);
+            setRevenueData(revenue);
         } catch (error) {
             console.error("Failed to fetch admin data", error);
         }
     };
 
+    const { addToast } = useToast();
+
     useEffect(() => {
-        fetchData();
+        let isMounted = true;
+        fetchData().then(() => {
+            if (isMounted) {
+                // done
+            }
+        });
+        return () => { isMounted = false; };
     }, []);
 
     const handleApprove = async (id) => {
         try {
             await AdminService.approveListing(id);
+            addToast('Listing approved!', 'success');
             fetchData(); // Refresh
         } catch (error) {
             console.error("Failed to approve", error);
+            addToast('Failed to approve listing.', 'error');
         }
     };
 
@@ -183,7 +199,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="h-[350px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={userGrowthData}>
+                                <AreaChart data={revenueData.length > 0 ? revenueData : userGrowthData}>
                                     <defs>
                                         <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.5} />
@@ -218,7 +234,7 @@ export default function AdminDashboard() {
                                     />
                                     <Area
                                         type="monotone"
-                                        dataKey="users"
+                                        dataKey="revenue"
                                         stroke="#3b82f6"
                                         strokeWidth={3}
                                         fillOpacity={1}

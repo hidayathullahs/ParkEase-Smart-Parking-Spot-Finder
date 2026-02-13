@@ -108,6 +108,7 @@ function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<OwnerDashboard />} />
           <Route path="add-parking" element={<AddParking />} />
+          <Route path="edit-parking/:id" element={<AddParking />} />
           <Route path="scan" element={<ProviderScan />} />
           <Route path="parkings" element={<MyParkings />} />
           <Route path="bookings" element={<OwnerBookings />} />
@@ -121,8 +122,7 @@ function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="users" element={<UserManagement />} />
-          <Route path="approvals" element={<AdminApprovals />} />
-          <Route path="settings" element={<AdminSettings />} />
+          <Route path="approvals" element={<AdminApprovals />} />          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         {/* Fallback */}
