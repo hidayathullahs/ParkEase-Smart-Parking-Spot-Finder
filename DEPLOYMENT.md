@@ -103,11 +103,6 @@ Parkease includes a `render.yaml` for easy one-click Render deployment.
 
 5. Click **Create Static Site**
 
-### Step 4: Verify Deployment
-
-- Backend: `https://parkease-backend.onrender.com/health`
-- Frontend: `https://parkease-frontend.onrender.com`
-
 ---
 
 ## 🐳 Docker Deployment
