@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CreditCard, Calendar, Lock, CheckCircle, Loader } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PaymentModal = ({ isOpen, onClose, amount, onConfirm }) => {
     const [step, setStep] = useState('input'); // input, processing, success

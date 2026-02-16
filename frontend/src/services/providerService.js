@@ -11,7 +11,7 @@ const getAuthHeader = () => {
 };
 
 const getDashboardStats = async () => {
-    const response = await axios.get(`${API_URL}/provider/stats`, { headers: getAuthHeader() });
+    const response = await axios.get(`${API_URL}/provider/dashboard`, { headers: getAuthHeader() });
     return response.data;
 };
 

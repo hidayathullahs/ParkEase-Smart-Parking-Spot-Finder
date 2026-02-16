@@ -57,6 +57,7 @@ function RecenterMap({ center }) {
 const Home = () => {
     const navigate = useNavigate();
     const [parkingSpots, setParkingSpots] = useState([]);
+    const [myBookings, setMyBookings] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     // const [loading, setLoading] = useState(true); // Unused
     const [userLocation, setUserLocation] = useState(null);
@@ -85,20 +86,28 @@ const Home = () => {
         return () => socket.disconnect();
     }, []);
 
-    // Initial Fetch
+    // Initial Fetch & User Bookings
     useEffect(() => {
-        const fetchParkingSpots = async () => {
+        const fetchData = async () => {
             try {
-                // Fetch approved parkings from backend
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/parkings`);
-                setParkingSpots(data);
+                // Fetch approved parkings
+                const parkingRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/parkings`);
+                setParkingSpots(parkingRes.data);
+
+                // Fetch user bookings if logged in
+                if (token) {
+                    const bookingRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/my`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setMyBookings(bookingRes.data);
+                }
             } catch (error) {
-                console.error("Error fetching parkings", error);
+                console.error("Error fetching data", error);
             }
         };
 
-        fetchParkingSpots();
-    }, []);
+        fetchData();
+    }, [token]);
 
     // Get User Location
     useEffect(() => {
@@ -146,6 +155,16 @@ const Home = () => {
         return result;
     }, [searchQuery, parkingSpots, sortType, userLocation]);
 
+    // Auto-Locate / Auto-Center on Search Results
+    useEffect(() => {
+        if (searchQuery && filteredSpots.length > 0) {
+            const firstMatch = filteredSpots[0];
+            if (firstMatch.location && firstMatch.location.lat && firstMatch.location.lng) {
+                setCenter([firstMatch.location.lat, firstMatch.location.lng]);
+            }
+        }
+    }, [searchQuery, filteredSpots]);
+
     // Magic Sort Logic
     const handleMagicSort = (type) => {
         setSortType(type);
@@ -184,10 +203,29 @@ const Home = () => {
                 return Math.sqrt(Math.pow(lat - userLocation[0], 2) + Math.pow(lng - userLocation[1], 2));
             };
             potentialSorted.sort((a, b) => getDist(a) - getDist(b));
+        } else if (type === 'my-location') {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        setUserLocation([latitude, longitude]);
+                        setCenter([latitude, longitude]);
+                        addToast("Located your position", "success");
+                    },
+                    (error) => {
+                        console.error("Location error", error);
+                        addToast("Unable to retrieve location", "error");
+                    }
+                );
+                return; // Exit early as we handle centering effectively here
+            } else {
+                addToast("Geolocation is not supported by this browser.", "error");
+                return;
+            }
         }
 
-        // Visual Feedback: Fly to top result
-        if (potentialSorted.length > 0) {
+        // Visual Feedback: Fly to top result (only if not my-location)
+        if (potentialSorted.length > 0 && type !== 'my-location') {
             const bestSpot = potentialSorted[0];
             if (bestSpot.location) {
                 setCenter([bestSpot.location.lat, bestSpot.location.lng]);
@@ -220,7 +258,30 @@ const Home = () => {
         setIsPaymentOpen(true);
     };
 
+    const isSpotBooked = (spotId) => {
+        return myBookings.some(b =>
+            (b.parkingId?.id === spotId || b.parkingId === spotId) &&
+            b.status === 'BOOKED'
+        );
+    };
+
+    const getSpotStatusBadge = (spot) => {
+        if (isSpotBooked(spot.id)) {
+            return (
+                <span className="bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase border border-blue-500/20">
+                    BOOKED
+                </span>
+            );
+        }
+        return (
+            <span className="bg-[#1c3a2f] text-[#34d399] text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">
+                {spot.status || 'AVAILABLE'}
+            </span>
+        );
+    };
+
     const handlePaymentSuccess = async () => {
+        // ... (existing code, ensure no changes to logic) ...
         try {
             const config = {
                 headers: {
@@ -240,7 +301,12 @@ const Home = () => {
             const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings`, bookingData, config);
 
             addToast(`Booking Confirmed for ${selectedSpot.name}!`, 'success');
-            // setIsPaymentOpen(false); // Handled by PaymentModal on success
+
+            // Refresh bookings to update UI
+            const bookingRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/my`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMyBookings(bookingRes.data);
 
             // Show QR Ticket
             setCurrentBooking({
@@ -267,7 +333,7 @@ const Home = () => {
             {/* Back Button (Desktop) - Removed as it's now in Header */}
 
             {/* Main Content Area */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative flex flex-col min-h-0">
 
                 {/* Search Bar - Floating Glass Overlay */}
                 <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[400] w-[92%] md:w-full max-w-xl px-0 md:px-4">
@@ -288,7 +354,7 @@ const Home = () => {
                 </div>
 
                 {viewMode === 'map' ? (
-                    <div className="h-full w-full relative z-0">
+                    <div className="flex-1 w-full relative z-0">
                         <MapContainer center={center} zoom={14} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                             <RecenterMap center={center} />
                             <TileLayer
@@ -330,9 +396,7 @@ const Home = () => {
 
                                                 <div className="flex items-center gap-3 mb-5">
                                                     <span className="text-blue-400 font-bold text-xl">₹{spot.pricing?.hourlyRate}<span className="text-sm text-gray-500 font-normal">/hr</span></span>
-                                                    <span className="bg-[#1c3a2f] text-[#34d399] text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase">
-                                                        {spot.status || 'AVAILABLE'}
-                                                    </span>
+                                                    {getSpotStatusBadge(spot)}
                                                 </div>
 
                                                 <div className="flex flex-col gap-2.5">
@@ -342,12 +406,27 @@ const Home = () => {
                                                     >
                                                         Details
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleShowRoute(spot)}
-                                                        className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-600/20 transition-all"
-                                                    >
-                                                        Show Route
-                                                    </button>
+                                                    {isSpotBooked(spot.id) ? (
+                                                        <button
+                                                            onClick={() => {
+                                                                const booking = myBookings.find(b => (b.parkingId?.id === spot.id || b.parkingId === spot.id) && b.status === 'BOOKED');
+                                                                if (booking) {
+                                                                    setCurrentBooking(booking);
+                                                                    setIsQROpen(true);
+                                                                }
+                                                            }}
+                                                            className="w-full bg-green-600 hover:bg-green-500 text-white py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-green-600/20 transition-all"
+                                                        >
+                                                            View Ticket
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleShowRoute(spot)}
+                                                            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-600/20 transition-all"
+                                                        >
+                                                            Show Route
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </Popup>
@@ -367,7 +446,7 @@ const Home = () => {
                         </MapContainer>
                     </div>
                 ) : (
-                    <div className="h-full w-full overflow-y-auto bg-[#0f1219] p-4 pt-20 pb-32">
+                    <div className="flex-1 w-full overflow-y-auto bg-[#0f1219] p-4 pt-20 pb-32">
                         <div className="max-w-7xl mx-auto">
                             <h2 className="text-2xl font-bold text-white mb-6">Available Spots ({filteredSpots.length})</h2>
 
@@ -392,9 +471,7 @@ const Home = () => {
                                                 </div>
 
                                                 <div className="absolute top-3 right-3 z-20">
-                                                    <span className="bg-[#1c3a2f] text-[#34d399] text-[10px] font-bold px-2 py-1 rounded tracking-wider uppercase border border-[#34d399]/20">
-                                                        {spot.status || 'AVAILABLE'}
-                                                    </span>
+                                                    {getSpotStatusBadge(spot)}
                                                 </div>
 
                                                 <div className="absolute bottom-3 left-3 z-20">
@@ -437,12 +514,27 @@ const Home = () => {
                                                         <Navigation size={16} />
                                                         Route
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleReserveClick(spot)}
-                                                        className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-600/20 transition-all"
-                                                    >
-                                                        Book Now
-                                                    </button>
+                                                    {isSpotBooked(spot.id) ? (
+                                                        <button
+                                                            onClick={() => {
+                                                                const booking = myBookings.find(b => (b.parkingId?.id === spot.id || b.parkingId === spot.id) && b.status === 'BOOKED');
+                                                                if (booking) {
+                                                                    setCurrentBooking(booking);
+                                                                    setIsQROpen(true);
+                                                                }
+                                                            }}
+                                                            className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-sm font-bold shadow-lg shadow-green-600/20 transition-all"
+                                                        >
+                                                            View Ticket
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleReserveClick(spot)}
+                                                            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-600/20 transition-all"
+                                                        >
+                                                            Book Now
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

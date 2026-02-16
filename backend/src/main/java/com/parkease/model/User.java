@@ -25,6 +25,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
+    private String status = "ACTIVE"; // ACTIVE, BANNED
+
     @Column(unique = true)
     private String googleId;
 
@@ -109,6 +111,14 @@ public class User {
 
     public void setResetPasswordExpire(Date resetPasswordExpire) {
         this.resetPasswordExpire = resetPasswordExpire;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Role getRole() {

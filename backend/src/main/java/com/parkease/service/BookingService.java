@@ -89,6 +89,9 @@ public class BookingService {
     }
 
     private int getCapacityForType(ParkingListing parking, VehicleType type) {
+        if (parking.getVehicleCapacity() == null) {
+            return parking.getApproxTotalCars();
+        }
         if (type == VehicleType.TWO_WHEELER) {
             return parking.getVehicleCapacity().getTwoWheeler();
         } else if (type == VehicleType.FOUR_SEATER) {

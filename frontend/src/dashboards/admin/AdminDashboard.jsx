@@ -68,32 +68,59 @@ export default function AdminDashboard() {
         totalRevenue: 0
     });
     const [pendingListings, setPendingListings] = useState([]);
+    const [approvedListings, setApprovedListings] = useState([]);
+    const [activeTab, setActiveTab] = useState('pending'); // 'pending' or 'approved'
 
     const [revenueData, setRevenueData] = useState([]);
 
     const fetchData = async () => {
-        try {
-            const [, pending, systemStats, revenue] = await Promise.all([
-                AdminService.getAllUsers(),
-                AdminService.getPendingListings(),
-                AdminService.getSystemStats(),
-                AdminService.getRevenueStats()
-            ]);
+        // Fetch each endpoint independently to handle partial failures
+        let allListings = [];
+        let systemStats = {
+            totalSpots: 0,
+            activeSpots: 0,
+            totalUsers: 0,
+            totalProviders: 0,
+            totalBookings: 0,
+            totalRevenue: 0
+        };
+        let revenue = [];
 
-            setStats({
-                totalParkings: systemStats.totalSpots || 0,
-                pendingApprovals: pending.length,
-                activeParkings: systemStats.activeSpots || 0,
-                totalUsers: systemStats.totalUsers || 0,
-                totalProviders: systemStats.totalProviders || 0,
-                totalBookings: systemStats.totalBookings || 0,
-                totalRevenue: systemStats.totalRevenue || 0
-            });
-            setPendingListings(pending);
-            setRevenueData(revenue);
+        try {
+            // The /pending endpoint actually returns ALL listings, not just pending
+            allListings = await AdminService.getPendingListings();
         } catch (error) {
-            console.error("Failed to fetch admin data", error);
+            console.error("Failed to fetch listings", error);
         }
+
+        try {
+            systemStats = await AdminService.getSystemStats();
+        } catch (error) {
+            console.error("Failed to fetch system stats", error);
+        }
+
+        try {
+            revenue = await AdminService.getRevenueStats();
+        } catch (error) {
+            console.error("Failed to fetch revenue stats", error);
+        }
+
+        // Filter listings by status
+        const pending = allListings.filter(listing => listing.status === 'PENDING');
+        const approved = allListings.filter(listing => listing.status === 'APPROVED');
+
+        setStats({
+            totalParkings: systemStats.totalSpots || 0,
+            pendingApprovals: pending.length,
+            activeParkings: systemStats.activeSpots || 0,
+            totalUsers: systemStats.totalUsers || 0,
+            totalProviders: systemStats.totalProviders || 0,
+            totalBookings: systemStats.totalBookings || 0,
+            totalRevenue: systemStats.totalRevenue || 0
+        });
+        setPendingListings(pending);
+        setApprovedListings(approved);
+        setRevenueData(revenue);
     };
 
     const { addToast } = useToast();
@@ -253,32 +280,72 @@ export default function AdminDashboard() {
                             <div className="p-2 rounded-lg bg-yellow-500/20">
                                 <AlertTriangle className="text-yellow-400" size={20} />
                             </div>
-                            Pending Approvals
+                            Parking Approvals
                         </h3>
 
+                        {/* Tab Buttons */}
+                        <div className="flex gap-2 mb-4">
+                            <button
+                                onClick={() => setActiveTab('pending')}
+                                className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition ${activeTab === 'pending'
+                                    ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                    : 'bg-white/5 text-gray-500 border border-white/5 hover:bg-white/10'
+                                    }`}
+                            >
+                                Pending ({pendingListings.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('approved')}
+                                className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition ${activeTab === 'approved'
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                    : 'bg-white/5 text-gray-500 border border-white/5 hover:bg-white/10'
+                                    }`}
+                            >
+                                Approved ({approvedListings.length})
+                            </button>
+                        </div>
+
                         <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                            {pendingListings.length === 0 ? (
-                                <p className="text-gray-500 text-center py-4">No pending approvals.</p>
-                            ) : (
-                                pendingListings.map((listing) => (
-                                    <div key={listing.id} className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition border border-white/5 flex flex-col gap-3 group">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h4 className="font-bold text-white text-sm group-hover:text-blue-400 transition-colors">{listing.title}</h4>
-                                                <p className="text-xs text-gray-500 mt-0.5">{listing.addressLine}</p>
+                            {activeTab === 'pending' ? (
+                                pendingListings.length === 0 ? (
+                                    <p className="text-gray-500 text-center py-4">No pending approvals.</p>
+                                ) : (
+                                    pendingListings.map((listing) => (
+                                        <div key={listing.id} className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition border border-white/5 flex flex-col gap-3 group">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="font-bold text-white text-sm group-hover:text-blue-400 transition-colors">{listing.title}</h4>
+                                                    <p className="text-xs text-gray-500 mt-0.5">{listing.addressLine}</p>
+                                                </div>
+                                                <span className="text-[10px] font-bold uppercase tracking-wide bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded border border-yellow-500/20">Pending</span>
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wide bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded border border-yellow-500/20">Pending</span>
+                                            <div className="flex gap-2 mt-2">
+                                                <button
+                                                    onClick={() => handleApprove(listing.id)}
+                                                    className="flex-1 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs font-bold rounded-lg border border-green-500/20 transition flex items-center justify-center gap-1">
+                                                    <Check size={12} /> Approve
+                                                </button>
+                                                <button className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold rounded-lg border border-red-500/20 transition">Reject</button>
+                                            </div>
                                         </div>
-                                        <div className="flex gap-2 mt-2">
-                                            <button
-                                                onClick={() => handleApprove(listing.id)}
-                                                className="flex-1 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs font-bold rounded-lg border border-green-500/20 transition flex items-center justify-center gap-1">
-                                                <Check size={12} /> Approve
-                                            </button>
-                                            <button className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold rounded-lg border border-red-500/20 transition">Reject</button>
+                                    ))
+                                )
+                            ) : (
+                                approvedListings.length === 0 ? (
+                                    <p className="text-gray-500 text-center py-4">No approved listings yet.</p>
+                                ) : (
+                                    approvedListings.map((listing) => (
+                                        <div key={listing.id} className="p-5 rounded-2xl bg-white/5 hover:bg-white/10 transition border border-white/5 flex flex-col gap-3 group">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="font-bold text-white text-sm group-hover:text-green-400 transition-colors">{listing.title}</h4>
+                                                    <p className="text-xs text-gray-500 mt-0.5">{listing.addressLine}</p>
+                                                </div>
+                                                <span className="text-[10px] font-bold uppercase tracking-wide bg-green-500/10 text-green-400 px-2 py-1 rounded border border-green-500/20">Approved</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
+                                    ))
+                                )
                             )}
                         </div>
                         {/* View All Overlay */}

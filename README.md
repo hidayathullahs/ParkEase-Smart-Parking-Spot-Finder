@@ -311,10 +311,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**Your Name**  
+**HIDAYATHULLAH**
 
-- GitHub: [@your-username](https://github.com/your-username)
-- LinkedIn: [Your Profile](https://linkedin.com/in/your-profile)
+- GitHub: [@hidayathullahs](https://github.com/hidayathullahs)
+- LinkedIn: [HIDAYATHULLAH](https://www.linkedin.com/in/hidayathullahs/)
 
 ---
 

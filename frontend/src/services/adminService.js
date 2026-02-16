@@ -40,13 +40,25 @@ const getRevenueStats = async () => {
     return response.data;
 };
 
+const getApprovedListings = async () => {
+    const response = await axios.get(`${API_URL}/admin/parkings/approved`, { headers: getAuthHeader() });
+    return response.data;
+};
+
+const updateUser = async (id, updates) => {
+    const response = await axios.put(`${API_URL}/admin/users/${id}`, updates, { headers: getAuthHeader() });
+    return response.data;
+};
+
 const AdminService = {
     getPendingListings,
     approveListing,
     rejectListing,
     getAllUsers,
     getSystemStats,
-    getRevenueStats
+    getRevenueStats,
+    getApprovedListings,
+    updateUser
 };
 
 export default AdminService;

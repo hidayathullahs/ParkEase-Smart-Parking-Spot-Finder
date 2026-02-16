@@ -9,6 +9,7 @@ const MagicFind = ({ onSort }) => {
         { id: 'cheapest', label: 'Cheapest', icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100', border: 'border-green-200' },
         { id: 'closest', label: 'Closest', icon: MapPin, color: 'text-blue-600', bg: 'bg-blue-100', border: 'border-blue-200' },
         { id: 'rating', label: 'Top Rated', icon: Star, color: 'text-yellow-600', bg: 'bg-yellow-100', border: 'border-yellow-200' },
+        { id: 'my-location', label: 'My Location', icon: MapPin, color: 'text-red-600', bg: 'bg-red-100', border: 'border-red-200' },
     ];
 
     const handleSort = (type) => {
