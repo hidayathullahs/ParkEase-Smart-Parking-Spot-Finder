@@ -2,8 +2,8 @@
 
 [![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red)]()
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.2-brightgreen)]()
-[![React](https://img.shields.io/badge/React-19.2.0-blue)]()  
-[![MongoDB](https://img.shields.io/badge/MongoDB-Latest-green)]()
+[![React](https://img.shields.io/badge/React-19.2.0-blue)]()
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-blue)]()
 
 > **A modern, full-stack parking management solution with real-time availability, integrated payments, and QR-based check-in.**
 
@@ -56,8 +56,9 @@
 
 - **Spring Boot 3.2.2** - Robust Java framework
 - **Spring Security** - JWT-based authentication
-- **MongoDB** - NoSQL database
+- **MySQL** - Relational database
 - **Maven** - Dependency management
+- **Hibernate / JPA** - ORM framework
 - **WebSocket** - Real-time communication
 - **JWT (io.jsonwebtoken)** - Secure token generation
 
@@ -75,7 +76,7 @@
 
 - **Java 17+** (for backend)
 - **Node.js 18+** (for frontend)
-- **MongoDB** (local or Atlas)
+- **MySQL Server** (local or managed)
 - **Maven** (for backend build)
 
 ### 1️⃣ Clone the Repository
@@ -92,8 +93,10 @@ cd backend
 
 # Configure application.properties
 # Update the following in src/main/resources/application.properties:
-# - spring.data.mongodb.uri=your_mongodb_connection_string
-# - parkease.app.jwtSecret=your_secret_key
+# - spring.datasource.url=jdbc:mysql://localhost:3306/parkease_db
+# - spring.datasource.username=root
+# - spring.datasource.password=your_password
+# - jwt.secret=your_secret_key
 
 # Build and run
 mvn clean install
@@ -110,12 +113,26 @@ cd frontend
 # Install dependencies
 npm install
 
-# Configure environment variables
+# Configure environment variables (Development)
 # Create .env file:
 VITE_API_URL=http://localhost:5002/api
 
 # Run development server
 npm run dev
+```
+
+### Configure Environment Variables (Production)
+
+```env
+# Backend
+DB_URL=jdbc:mysql://your_production_mysql_host:3306/parkease_db
+DB_USERNAME=your_db_username
+DB_PASSWORD=your_db_password
+JWT_SECRET=your_strong_secret_key
+JWT_EXPIRATION=86400000
+
+# Frontend
+VITE_API_URL=https://your-backend-url.com/api
 ```
 
 Frontend will start on **<http://localhost:5173>**
@@ -125,16 +142,17 @@ Frontend will start on **<http://localhost:5173>**
 ## 📂 Project Structure
 
 ```
+
 parkease/
 ├── backend/                 # Spring Boot backend
 │   ├── src/main/java/
 │   │   └── com/parkease/
 │   │       ├── controller/  # REST API endpoints
-│   │       ├── model/       # MongoDB models
+│   │       ├── model/       # JPA Entities
 │   │       ├── service/     # Business logic
 │   │       ├── security/    # JWT & Spring Security config
 │   │       ├── dto/         # Data transfer objects
-│   │       └── repository/  # MongoDB repositories
+│   │       └── repository/  # Spring Data JPA repositories
 │   └── src/main/resources/
 │       └── application.properties
 │
@@ -150,6 +168,7 @@ parkease/
 ├── docker-compose.yml       # Docker setup
 ├── render.yaml              # Render deployment config
 └── README.md                # You are here!
+
 ```
 
 ---
@@ -163,173 +182,3 @@ Use these credentials to test the application:
 | **Admin** | `admin@parkease.com` | `admin123` | Approve listings, Manage users |
 | **Provider** | `owner@parkease.com` | `owner123` | Add parking, Scan QR, View Revenue |
 | **Driver** | `user@parkease.com` | `user123` | Book spots, Pay, Withdrawal |
-
----
-
-## 🚦 Features Overview
-
-### 🚗 For Drivers
-
-- **Interactive Map**: Dark-themed Leaflet map with "Magic Sort" validation.
-- **Booking & Payment**: Seamless flow from selection to payment (simulated).
-- **Wallet**: Add funds and **Withdraw** balance (New!).
-- **QR Tickets**: Instant access to booking QR codes.
-
-### 🏢 For Providers (Space Owners)
-
-- **Manage Listings**: Add, Edit, and Delete parking spots.
-- **Real-time Dashboard**: Track active bookings and revenue.
-- **Withdrawal**: Request payout of earnings directly from the wallet.
-
-### 🛡️ For Admins
-
-- **Verification**: Approve or Reject new parking listings.
-- **Oversight**: View all users and system statistics.
-
----
-
-## 🎨 Key Components
-
-### Frontend Components
-
-- **`QRGenerator.jsx`** - Generates booking QR tickets with download/share
-- **`PaymentModal.jsx`** - Handles payment flow (simulated)
-- **`BookingDrawer.jsx`** - Bottom drawer for booking confirmation
-- **`NavigationOverlay.jsx`** - Map navigation controls
-- **`ErrorBoundary.jsx`** - Production-ready error handling
-- **`AIChatbot.jsx`** - AI assistant for parking search
-
-### Backend Controllers
-
-- **`AuthController`** - User authentication
-- **`ParkingController`** - Parking CRUD operations
-- **`BookingController`** - Booking management
-- **`ProviderController`** - Provider-specific operations
-- **`AdminController`** - Admin operations
-
----
-
-## 💡 Usage Guide
-
-### For Drivers
-
-1. **Register** → Login
-2. **Search** parking spots on the map
-3. **Select** a spot → View details
-4. **Book Now** → Complete payment
-5. **Download QR Ticket** → Present at parking location
-
-### For Providers
-
-1. **Register** as PROVIDER
-2. **Add Parking** listing with details
-3. Wait for **admin approval**
-4. **Scan booking QR codes** for check-in
-5. **View analytics** on dashboard
-
-### For Admins
-
-1. Login as ADMIN
-2. **Review pending** parking listings
-3. **Approve/Reject** listings
-4. **Monitor system** analytics
-
----
-
-## 🧪 Testing
-
-### Backend
-
-```bash
-mvn test
-```
-
-### Frontend
-
-```bash
-npm run test
-```
-
-### Manual Testing Checklist
-
-- [ ] User registration and login
-- [ ] Parking search and filtering
-- [ ] Booking flow with payment
-- [ ] QR code generation and download
-- [ ] Provider adding parking spots
-- [ ] Admin approval workflow
-- [ ] QR code scanning
-
----
-
-## 🚢 Deployment
-
-### Docker Deployment
-
-```bash
-docker-compose up --build
-```
-
-### Cloud Deployment (Render)
-
-1. Push code to GitHub
-2. Connect repository to Render
-3. Deploy using `render.yaml` configuration
-4. Set environment variables in Render dashboard
-
-### Environment Variables (Production)
-
-```env
-# Backend
-MONGODB_URI=your_production_mongodb_uri
-JWT_SECRET=your_strong_secret_key
-JWT_EXPIRATION_MS=86400000
-
-# Frontend
-VITE_API_URL=https://your-backend-url.com/api
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 👨‍💻 Author
-
-**HIDAYATHULLAH**
-
-- GitHub: [@hidayathullahs](https://github.com/hidayathullahs)
-- LinkedIn: [HIDAYATHULLAH](https://www.linkedin.com/in/hidayathullahs/)
-
----
-
-## 🙏 Acknowledgments
-
-- Leaflet for amazing map integration
-- Spring Boot community for excellent documentation
-- React ecosystem for powerful tools and libraries
-
----
-
-## 📞 Support
-
-For support, email <your-email@example.com> or open an issue on GitHub.
-
----
-
-**Made with ❤️ for hassle-free parking management**
