@@ -6,9 +6,14 @@
 [![React](https://img.shields.io/badge/React-19.2.0-blue)]()
 [![Vite](https://img.shields.io/badge/Vite-7.3-purple)]()
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)]()
-[![Render](https://img.shields.io/badge/Render-Deployable-black)]()
+[![Render](https://img.shields.io/badge/Render-Deployed-success)]()
 
 > **A modern full-stack smart parking management solution featuring real-time availability, dynamic pricing, slot booking overlap prevention, QR-based check-in/check-out, booking extensions, wallet integration, notifications, and role-based access.**
+
+### 🌐 Live Production Links
+- **Frontend App**: [https://parkease-frontend-ogl9.onrender.com](https://parkease-frontend-ogl9.onrender.com)
+- **Backend API**: [https://parkease-backend-tous.onrender.com](https://parkease-backend-tous.onrender.com)
+- **API Health**: [https://parkease-backend-tous.onrender.com/health](https://parkease-backend-tous.onrender.com/health)
 
 ---
 
