@@ -1,13 +1,17 @@
 package com.parkease.dto;
 
 public class GoogleLoginRequest {
-    private String tokenId; 
+    private String token;
+    private String tokenId;
     private String googleId;
     private String email;
     private String name;
     private String photo;
-    
+
     public GoogleLoginRequest() {}
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 
     public String getTokenId() { return tokenId; }
     public void setTokenId(String tokenId) { this.tokenId = tokenId; }

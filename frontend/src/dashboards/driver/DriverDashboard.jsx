@@ -9,6 +9,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useAuth } from '../../context/AuthContext';
 import ParkingMap from '../../components/ParkingMap';
 import ParkingService from '../../services/parkingService';
+import { getMyTickets } from '../../services/bookingService';
 
 // --- ANIMATION VARIANTS ---
 const containerVariants = {
@@ -75,7 +76,7 @@ const StatsCard = ({ title, value, subtext, icon: Icon, gradient, index }) => (
     </motion.div>
 );
 
-const TodayPanel = () => (
+const TodayPanel = ({ currentBooking, lastBooking }) => (
     <motion.div
         variants={itemVariants}
         whileHover={hoverScaleWithGlow}
@@ -89,28 +90,38 @@ const TodayPanel = () => (
             <div className="flex justify-between items-start mb-8">
                 <div>
                     <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
-                        Today's Session
-                        <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                        </span>
+                        {currentBooking ? "Today's Session" : "Recent Activity"}
+                        {currentBooking && (
+                            <span className="relative flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                        )}
                     </h3>
-                    <p className="text-sm text-gray-400 font-medium">Live Parking Status</p>
+                    <p className="text-sm text-gray-400 font-medium">
+                        {currentBooking ? "Live Parking Status" : "Last Purchased Spot"}
+                    </p>
                 </div>
-                <div className="px-4 py-1.5 rounded-full bg-green-500/10 text-green-400 text-xs font-bold border border-green-500/20 shadow-[0_0_15px_-3px_rgba(74,222,128,0.3)]">
-                    ACTIVE NOW
-                </div>
+                {currentBooking && (
+                    <div className="px-4 py-1.5 rounded-full bg-green-500/10 text-green-400 text-xs font-bold border border-green-500/20 shadow-[0_0_15px_-3px_rgba(74,222,128,0.3)]">
+                        ACTIVE NOW
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-2 gap-8 relative z-10">
                 <div className="flex flex-col">
                     <span className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-2">Duration</span>
-                    <span className="text-4xl font-mono text-white tracking-widest font-light">02:14:30</span>
+                    <span className="text-4xl font-mono text-white tracking-widest font-light">
+                        {currentBooking ? "02:14:30" : "00:00:00"}
+                    </span>
                 </div>
                 <div className="flex flex-col relative">
                     <div className="absolute -left-4 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
                     <span className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-2">Current Cost</span>
-                    <span className="text-4xl font-mono text-blue-400 font-medium">₹120.50</span>
+                    <span className="text-4xl font-mono text-blue-400 font-medium">
+                        ₹{currentBooking ? "120.50" : "0.00"}
+                    </span>
                 </div>
             </div>
 
@@ -120,13 +131,23 @@ const TodayPanel = () => (
                         <MapPin size={18} />
                     </div>
                     <div>
-                        <div className="text-white font-medium">Phoenix Marketcity</div>
-                        <div className="text-gray-500 text-xs">Floor B2, Slot A-12</div>
+                        <div className="text-white font-medium">
+                            {currentBooking
+                                ? currentBooking.parkingId.locationName
+                                : (lastBooking ? lastBooking.parkingId.locationName : "No Recent Parking")}
+                        </div>
+                        <div className="text-gray-500 text-xs">
+                            {currentBooking
+                                ? `Active Slot: ${currentBooking.parkingId.address?.split(',')[0] || 'Main Floor'}`
+                                : (lastBooking ? `Last Slot: ${lastBooking.parkingId.address?.split(',')[0] || 'Main Floor'}` : "Purchase a spot to see it here")}
+                        </div>
                     </div>
                 </div>
-                <button className="px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-bold rounded-xl border border-red-500/20 transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]">
-                    End Session
-                </button>
+                {currentBooking && (
+                    <button className="px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-bold rounded-xl border border-red-500/20 transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]">
+                        End Session
+                    </button>
+                )}
             </div>
         </div>
     </motion.div>
@@ -136,21 +157,37 @@ const DriverDashboard = () => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('map'); // map, stats, heatmap
     const [parkings, setParkings] = useState([]);
+    const [bookings, setBookings] = useState([]);
 
     useEffect(() => {
-        const fetchParkings = async () => {
+        const fetchDashboardData = async () => {
             try {
-                const data = await ParkingService.getAllParkings();
-                setParkings(data);
+                // Fetch parkings if map is active
+                if (activeTab === 'map') {
+                    const parkingData = await ParkingService.getAllParkings();
+                    setParkings(parkingData);
+                }
+
+                // Fetch user bookings
+                const bookingResponse = await getMyTickets();
+                if (bookingResponse.data) {
+                    // Sort bookings by date descending
+                    const sortedBookings = bookingResponse.data.sort((a, b) =>
+                        new Date(b.startTime) - new Date(a.startTime)
+                    );
+                    setBookings(sortedBookings);
+                }
             } catch (error) {
-                console.error("Failed to fetch parkings:", error);
+                console.error("Failed to fetch dashboard data:", error);
             }
         };
 
-        if (activeTab === 'map') {
-            fetchParkings();
-        }
+        fetchDashboardData();
     }, [activeTab]);
+
+    // Determine current and last booking
+    const currentBooking = bookings.find(b => b.status === 'BOOKED' || b.status === 'IN_PROGRESS');
+    const lastBooking = bookings.length > 0 ? (currentBooking ? bookings[1] : bookings[0]) : null;
 
     // Optimized greeting
     const [greeting] = useState(() => {
@@ -221,7 +258,7 @@ const DriverDashboard = () => {
 
                     {/* Top Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <TodayPanel />
+                        <TodayPanel currentBooking={currentBooking} lastBooking={lastBooking} />
                         <StatsCard index={1} title="Wallet Balance" value={`₹${user?.walletBalance?.toFixed(2) || '0.00'}`} subtext="Available Funds" icon={CreditCard} gradient="from-indigo-600/20 to-blue-900/20" />
                         <StatsCard index={2} title="ParkPoints™" value="1,250" subtext="250 pts to reward" icon={Gift} gradient="from-amber-600/20 to-orange-900/20" />
                     </div>

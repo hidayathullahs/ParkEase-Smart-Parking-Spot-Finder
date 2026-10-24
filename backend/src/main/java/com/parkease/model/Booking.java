@@ -1,46 +1,39 @@
 package com.parkease.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.Date;
 
-@Entity
-@Table(name = "bookings")
+@Document(collection = "bookings")
 public class Booking {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(unique = true)
+    @Indexed(unique = true)
     private String bookingId; // Human readable or short ID
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @DBRef
     private User userId;
 
-    @ManyToOne
-    @JoinColumn(name = "parking_id")
+    @DBRef
     private ParkingListing parkingId;
 
-    @Enumerated(EnumType.STRING)
     private VehicleType vehicleType;
 
-    @Temporal(TemporalType.TIMESTAMP)
     private Date startTime;
-    @Temporal(TemporalType.TIMESTAMP)
     private Date endTime;
 
     private double totalHours;
     private double totalAmount;
 
-    @Enumerated(EnumType.STRING)
     private BookingStatus status = BookingStatus.BOOKED;
 
-    @Column(length = 1000)
     private String qrCodeDataUrl;
 
-    @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
-    @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt = new Date();
 
     public Booking() {

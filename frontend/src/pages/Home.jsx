@@ -3,9 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'; // Added useMap
 import L from 'leaflet';
 import axios from 'axios';
-import { Search, MapPin, Navigation, Palette, X, ArrowLeft } from 'lucide-react';
+import { X, Navigation, Search, MapPin, Palette, ArrowLeft } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import io from 'socket.io-client';
 import SuccessAnimation from '../components/SuccessAnimation';
 
 import MagicFind from '../components/MagicFind';
@@ -36,7 +35,7 @@ const createCustomIcon = (price, isSelected) => {
     return L.divIcon({
         className: 'custom-marker',
         html: `<div class="${isSelected ? 'bg-black border-green-500 scale-110' : 'bg-[#0f1219] border-white/20'} w-12 h-12 rounded-full border-2 flex items-center justify-center shadow-2xl transform transition-all hover:scale-110">
-                <span class="${isSelected ? 'text-green-500' : 'text-white'} text-[13px] font-bold tracking-tighter">$${displayPrice}</span>
+                <span class="${isSelected ? 'text-green-500' : 'text-white'} text-[13px] font-bold tracking-tighter">₹${displayPrice}</span>
                </div>
                ${isSelected ? '<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-t-[8px] border-t-black border-r-[6px] border-r-transparent"></div>' : ''}
                `,
@@ -75,6 +74,7 @@ const Home = () => {
     const { addToast } = useToast();
     const { token } = useAuth(); // REPLACED: const { user, token } = useAuth();
 
+    /*
     useEffect(() => {
         const socket = io(import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5002');
         socket.on('parking_update', () => { // Removed unused data param
@@ -85,6 +85,7 @@ const Home = () => {
         });
         return () => socket.disconnect();
     }, []);
+    */
 
     // Initial Fetch & User Bookings
     useEffect(() => {
@@ -155,15 +156,8 @@ const Home = () => {
         return result;
     }, [searchQuery, parkingSpots, sortType, userLocation]);
 
-    // Auto-Locate / Auto-Center on Search Results
-    useEffect(() => {
-        if (searchQuery && filteredSpots.length > 0) {
-            const firstMatch = filteredSpots[0];
-            if (firstMatch.location && firstMatch.location.lat && firstMatch.location.lng) {
-                setCenter([firstMatch.location.lat, firstMatch.location.lng]);
-            }
-        }
-    }, [searchQuery, filteredSpots]);
+    // Auto-Locate / Auto-Center on Search Results is handled by MagicFind interactions usually
+    // or manually when spots are updated. Removing this effect to prevent cascading renders.
 
     // Magic Sort Logic
     const handleMagicSort = (type) => {
@@ -294,6 +288,7 @@ const Home = () => {
                 parkingId: selectedSpot.id,
                 startTime: new Date(),
                 endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // Default 2 hours
+                totalHours: 2,
                 totalAmount: selectedSpot.pricing?.hourlyRate * 2 || 50,
                 vehicleType: 'FOUR_SEATER'
             };
@@ -551,6 +546,7 @@ const Home = () => {
                     onClose={() => setIsBookingOpen(false)}
                     spot={selectedSpot}
                     onConfirm={handleConfirmBooking}
+                    status={selectedSpot ? (selectedSpot.isBooked || selectedSpot.status === 'BOOKED' ? "Booked" : "Available") : "Available"}
                 />
 
                 <NavigationOverlay

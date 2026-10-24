@@ -1,6 +1,7 @@
 package com.parkease.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,12 +14,22 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableMethodSecurity
 public class WebSecurityConfig {
     @Autowired
     UserDetailsServiceImpl userDetailsService;
+
+    @Value("${cors.allowed-origins:*}")
+    private String corsAllowedOrigins;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -28,10 +39,8 @@ public class WebSecurityConfig {
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
-
         return authProvider;
     }
 
@@ -50,10 +59,11 @@ public class WebSecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/parkings/**").permitAll() // Public listings
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Swagger
-                        .requestMatchers("/", "/health").permitAll() // Health check
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/", "/health", "/api/health").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated());
 
@@ -64,15 +74,27 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
-        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
-        configuration.setAllowedOriginPatterns(java.util.Collections.singletonList("*")); // For Dev: Allow all. For
-                                                                                          // Prod: Set domain.
-        configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(java.util.Arrays.asList("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        List<String> origins = Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+
+        if (origins.contains("*") || origins.isEmpty()) {
+            configuration.setAllowedOriginPatterns(List.of("*"));
+        } else {
+            configuration.setAllowedOriginPatterns(origins);
+        }
+
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }

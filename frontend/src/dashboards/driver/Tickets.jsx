@@ -120,32 +120,40 @@ export default function Tickets() {
                                     </div>
 
                                     <div className="mt-4 flex flex-wrap gap-3">
-                                        <button
-                                            onClick={() => handleCancel(t.id)}
-                                            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-red-400"
-                                        >
-                                            Cancel
-                                        </button>
+                                        {(t.status === 'BOOKED' || t.status === 'booked') ? (
+                                            <>
+                                                <button
+                                                    onClick={() => handleCancel(t.id)}
+                                                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-red-400"
+                                                >
+                                                    Cancel
+                                                </button>
 
-                                        <button
-                                            onClick={async () => {
-                                                if (!confirm("Extend by 1 hour?")) return;
-                                                try { await extendBooking(t.id, 1); fetchTickets(); } catch (e) { alert(e.response?.data?.message || "Failed"); }
-                                            }}
-                                            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-blue-300"
-                                        >
-                                            +1h
-                                        </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!confirm("Extend by 1 hour?")) return;
+                                                        try { await extendBooking(t.id, 1); fetchTickets(); } catch (e) { alert(e.response?.data?.message || "Failed"); }
+                                                    }}
+                                                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-blue-300"
+                                                >
+                                                    +1h
+                                                </button>
 
-                                        <button
-                                            onClick={async () => {
-                                                if (!confirm("Extend by 2 hours?")) return;
-                                                try { await extendBooking(t.id, 2); fetchTickets(); } catch (e) { alert(e.response?.data?.message || "Failed"); }
-                                            }}
-                                            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-blue-300"
-                                        >
-                                            +2h
-                                        </button>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!confirm("Extend by 2 hours?")) return;
+                                                        try { await extendBooking(t.id, 2); fetchTickets(); } catch (e) { alert(e.response?.data?.message || "Failed"); }
+                                                    }}
+                                                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-blue-300"
+                                                >
+                                                    +2h
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <div className={`px-4 py-2 rounded-xl border font-bold uppercase tracking-wider text-[10px] ${t.status === 'CANCELLED' || t.status === 'cancelled' ? 'text-orange-400 bg-orange-400/10 border-orange-400/20' : 'text-gray-400 bg-white/5 border-white/10'}`}>
+                                                {t.status}
+                                            </div>
+                                        )}
 
                                         <button
                                             disabled={!navUrl}

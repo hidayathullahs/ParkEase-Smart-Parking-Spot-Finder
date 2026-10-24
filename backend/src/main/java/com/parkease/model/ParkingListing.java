@@ -1,64 +1,54 @@
 package com.parkease.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.Date;
 import java.util.List;
 
-@Entity
-@Table(name = "parking_listings")
+@Document(collection = "parking_listings")
 public class ParkingListing {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @ManyToOne
-    @JoinColumn(name = "provider_id")
+    @DBRef
     private User providerId; // Reference to User
 
+    @Indexed
     private String title;
-    @Column(length = 1000)
     private String description;
 
-    @Enumerated(EnumType.STRING)
     private OwnershipRelation ownershipRelation;
 
     private String addressLine;
     private String city;
     private String pincode;
 
-    @Embedded
     private Location location;
 
     private String availableFrom;
     private String availableTo;
 
-    @Embedded
     private Dimensions dimensions;
 
     private int approxTotalCars;
 
-    @Embedded
     private VehicleCapacity vehicleCapacity;
 
-    @Embedded
     private Pricing pricing;
 
-    @ElementCollection
     private List<String> images;
 
-    @Enumerated(EnumType.STRING)
     private ListingStatus status = ListingStatus.PENDING;
     private String rejectionReason = "";
 
-    @ManyToOne
-    @JoinColumn(name = "approved_by")
+    @DBRef
     private User approvedBy;
-    @Temporal(TemporalType.TIMESTAMP)
     private Date approvedAt;
 
-    @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
-    @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt = new Date();
 
     public ParkingListing() {
@@ -241,7 +231,6 @@ public class ParkingListing {
         this.updatedAt = updatedAt;
     }
 
-    @Embeddable
     public static class Location {
         private double lat;
         private double lng;
@@ -271,7 +260,6 @@ public class ParkingListing {
         }
     }
 
-    @Embeddable
     public static class Dimensions {
         private double length;
         private double width;
@@ -305,7 +293,6 @@ public class ParkingListing {
         }
     }
 
-    @Embeddable
     public static class VehicleCapacity {
         private int twoWheeler = 0;
         private int fourWheeler = 0;
@@ -357,7 +344,6 @@ public class ParkingListing {
         }
     }
 
-    @Embeddable
     public static class Pricing {
         private double hourlyRate;
 

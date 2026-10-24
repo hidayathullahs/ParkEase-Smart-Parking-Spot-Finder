@@ -1,6 +1,7 @@
 package com.parkease.controller;
 
 import com.parkease.dto.BookingRequest;
+import com.parkease.model.Booking;
 import com.parkease.model.BookingStatus;
 import com.parkease.security.UserDetailsImpl;
 import com.parkease.service.BookingService;
@@ -33,7 +34,7 @@ public class BookingController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> getMyBookings(@AuthenticationPrincipal UserDetails userDetails) {
         UserDetailsImpl user = (UserDetailsImpl) userDetails;
         return ResponseEntity.ok(bookingService.getMyBookings(user.getId()));
@@ -41,7 +42,68 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getBooking(@PathVariable String id) {
-        return ResponseEntity.ok(bookingService.getBookingById(id));
+        try {
+            return ResponseEntity.ok(bookingService.getBookingById(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Cancel Booking
+    @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> cancelBooking(@PathVariable String id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UserDetailsImpl user = (UserDetailsImpl) userDetails;
+        try {
+            Booking cancelled = bookingService.cancelBooking(id, user.getId());
+            return ResponseEntity.ok(Map.of("message", "Booking cancelled successfully", "booking", cancelled));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // Extend Booking
+    @PutMapping("/{id}/extend")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> extendBooking(@PathVariable String id,
+            @RequestBody Map<String, Object> body,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UserDetailsImpl user = (UserDetailsImpl) userDetails;
+        try {
+            int extraHours = 1;
+            if (body.containsKey("extraHours")) {
+                extraHours = Integer.parseInt(body.get("extraHours").toString());
+            }
+            Booking extended = bookingService.extendBooking(id, extraHours, user.getId());
+            return ResponseEntity.ok(Map.of("message", "Booking extended successfully", "booking", extended));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // Provider / Admin Check In
+    @PutMapping("/{id}/checkin")
+    @PreAuthorize("hasAuthority('ROLE_PROVIDER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> checkIn(@PathVariable String id) {
+        try {
+            Booking updated = bookingService.checkInBooking(id);
+            return ResponseEntity.ok(Map.of("message", "Driver checked in successfully", "booking", updated));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // Provider / Admin Check Out
+    @PutMapping("/{id}/checkout")
+    @PreAuthorize("hasAuthority('ROLE_PROVIDER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> checkOut(@PathVariable String id) {
+        try {
+            Booking updated = bookingService.checkOutBooking(id);
+            return ResponseEntity.ok(Map.of("message", "Driver checked out successfully", "booking", updated));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // Provider Scan API
@@ -57,7 +119,7 @@ public class BookingController {
     }
 
     @GetMapping("/provider")
-    @PreAuthorize("hasAuthority('ROLE_PROVIDER')")
+    @PreAuthorize("hasAuthority('ROLE_PROVIDER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> getProviderBookings(@AuthenticationPrincipal UserDetails userDetails) {
         UserDetailsImpl user = (UserDetailsImpl) userDetails;
         return ResponseEntity.ok(bookingService.getProviderBookings(user.getId()));

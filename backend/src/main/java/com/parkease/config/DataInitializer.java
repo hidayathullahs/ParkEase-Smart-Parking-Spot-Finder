@@ -20,23 +20,36 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private com.parkease.repository.ParkingListingRepository parkingListingRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${admin.default.email:admin@parkease.com}")
+    private String adminEmail;
+
+    @org.springframework.beans.factory.annotation.Value("${admin.default.password:admin123}")
+    private String adminPassword;
+
+    @org.springframework.beans.factory.annotation.Value("${app.seed.enabled:true}")
+    private boolean seedEnabled;
+
     @Override
     public void run(String... args) throws Exception {
+        if (!seedEnabled) {
+            System.out.println("ℹ️ Database seeding disabled via app.seed.enabled=false");
+            return;
+        }
+
         // Check if admin exists
         User admin;
-        if (!userRepository.existsByEmail("admin@parkease.com")) {
+        if (!userRepository.existsByEmail(adminEmail)) {
             admin = new User();
             admin.setName("Super Admin");
-            admin.setEmail("admin@parkease.com");
-            admin.setPassword(passwordEncoder.encode("admin123")); // Default password
+            admin.setEmail(adminEmail);
+            admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRole(Role.ADMIN);
             admin.setPhone("0000000000");
 
             admin = userRepository.save(admin);
-            System.out.println("✅ Default Admin User Created: admin@parkease.com / admin123");
+            System.out.println("✅ Admin User Created: " + adminEmail);
         } else {
-            // Optional: Ensure the existing admin has the correct role
-            admin = userRepository.findByEmail("admin@parkease.com").orElse(null);
+            admin = userRepository.findByEmail(adminEmail).orElse(null);
             if (admin != null) {
                 boolean changed = false;
                 if (admin.getRole() != Role.ADMIN) {

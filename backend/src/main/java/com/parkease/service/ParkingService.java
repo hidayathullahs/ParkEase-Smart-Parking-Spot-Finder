@@ -19,16 +19,25 @@ public class ParkingService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired(required = false)
+    NotificationService notificationService;
+
     public ParkingListing createListing(ParkingListing listing, String providerId) {
         User provider = userRepository.findById(providerId)
                 .orElseThrow(() -> new RuntimeException("Provider not found"));
         listing.setProviderId(provider);
         listing.setStatus(ListingStatus.PENDING);
 
-        // Auto Calculate Dimensions if needed
-        // listing.getDimensions().setTotalArea(...)
+        ParkingListing saved = parkingListingRepository.save(listing);
 
-        return parkingListingRepository.save(listing);
+        if (notificationService != null) {
+            try {
+                notificationService.createNotification(provider.getId(), "Listing Submitted",
+                        "Your parking space '" + listing.getTitle() + "' has been submitted for admin approval.");
+            } catch (Exception ignored) {}
+        }
+
+        return saved;
     }
 
     public List<ParkingListing> getAllListings() {
@@ -67,9 +76,11 @@ public class ParkingService {
         existing.setDimensions(updatedData.getDimensions());
         existing.setImages(updatedData.getImages());
         existing.setOwnershipRelation(updatedData.getOwnershipRelation());
+        existing.setVehicleCapacity(updatedData.getVehicleCapacity());
+        existing.setApproxTotalCars(updatedData.getApproxTotalCars());
 
-        // Reset status to pending after edit? Usually yes for re-approval
         existing.setStatus(ListingStatus.PENDING);
+        existing.setUpdatedAt(new Date());
 
         return parkingListingRepository.save(existing);
     }
@@ -86,7 +97,16 @@ public class ParkingService {
         listing.setApprovedBy(admin);
         listing.setApprovedAt(new Date());
 
-        return parkingListingRepository.save(listing);
+        ParkingListing saved = parkingListingRepository.save(listing);
+
+        if (notificationService != null && listing.getProviderId() != null) {
+            try {
+                notificationService.createNotification(listing.getProviderId().getId(), "Listing Approved",
+                        "Congratulations! Your parking listing '" + listing.getTitle() + "' has been approved by admin.");
+            } catch (Exception ignored) {}
+        }
+
+        return saved;
     }
 
     public ParkingListing rejectListing(String id, String reason) {
@@ -96,7 +116,17 @@ public class ParkingService {
 
         listing.setStatus(ListingStatus.REJECTED);
         listing.setRejectionReason(reason);
+        listing.setUpdatedAt(new Date());
 
-        return parkingListingRepository.save(listing);
+        ParkingListing saved = parkingListingRepository.save(listing);
+
+        if (notificationService != null && listing.getProviderId() != null) {
+            try {
+                notificationService.createNotification(listing.getProviderId().getId(), "Listing Rejected",
+                        "Your parking listing '" + listing.getTitle() + "' was not approved. Reason: " + reason);
+            } catch (Exception ignored) {}
+        }
+
+        return saved;
     }
 }

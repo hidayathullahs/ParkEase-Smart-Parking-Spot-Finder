@@ -17,7 +17,6 @@ import java.util.Map;
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
-    // Hot reload trigger
     @Autowired
     ParkingService parkingService;
 
@@ -29,11 +28,6 @@ public class AdminController {
         // In real app, might want filter. For now returning all so admin can see
         // PENDING
         return ResponseEntity.ok(parkingService.getAllListings());
-    }
-
-    @GetMapping("/parkings/approved")
-    public ResponseEntity<?> getApprovedListings() {
-        return ResponseEntity.ok(parkingService.getApprovedListings());
     }
 
     @PutMapping("/parkings/{id}/approve")
@@ -102,12 +96,6 @@ public class AdminController {
         }
         if (updates.containsKey("name")) {
             user.setName((String) updates.get("name"));
-        }
-        if (updates.containsKey("status")) {
-            user.setStatus((String) updates.get("status"));
-        }
-        if (updates.containsKey("role")) {
-            user.setRole(com.parkease.model.Role.valueOf((String) updates.get("role")));
         }
         // ... add other fields if needed
 

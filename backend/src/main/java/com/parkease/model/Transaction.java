@@ -1,28 +1,26 @@
 package com.parkease.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.Date;
 
-@Entity
-@Table(name = "transactions")
+@Document(collection = "transactions")
 public class Transaction {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @DBRef
     private User user;
 
-    @OneToOne
-    @JoinColumn(name = "booking_id")
+    @DBRef
     private Booking booking;
 
     private double amount;
     private String paymentMethod; // e.g., "CARD", "UPI"
     private String status; // "SUCCESS", "FAILED", "PENDING"
 
-    @Temporal(TemporalType.TIMESTAMP)
     private Date timestamp = new Date();
 
     private String transactionReference; // Mock ref ID

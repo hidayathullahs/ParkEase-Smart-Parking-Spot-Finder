@@ -1,8 +1,8 @@
 import React from 'react';
 import { X, Zap, Shield, Navigation, Clock, CreditCard, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
-const BookingDrawer = ({ isOpen, onClose, spot, onConfirm }) => {
+const BookingDrawer = ({ isOpen, onClose, spot, onConfirm, status }) => {
     return (
         <AnimatePresence>
             {isOpen && spot && (
@@ -37,8 +37,8 @@ const BookingDrawer = ({ isOpen, onClose, spot, onConfirm }) => {
                                     <div>
                                         <h2 className="text-3xl font-bold mb-2">{spot.name || "Spot Details"}</h2>
                                         <div className="flex items-center gap-3 text-sm">
-                                            <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded font-bold uppercase text-xs tracking-wider border border-green-500/30">
-                                                Available
+                                            <span className={`${status === 'Available' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'} px-2 py-1 rounded font-bold uppercase text-xs tracking-wider border`}>
+                                                {status}
                                             </span>
                                             <span className="text-gray-400">• Level 1</span>
                                             <span className="text-gray-400">• EV</span>
@@ -55,7 +55,7 @@ const BookingDrawer = ({ isOpen, onClose, spot, onConfirm }) => {
                                 <div className="bg-[#1a1f2e] rounded-2xl p-6 border border-white/5 space-y-4">
                                     <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                         <span className="text-gray-400">Hourly Rate</span>
-                                        <span className="text-2xl font-bold">${spot.pricing?.hourlyRate || 25}<span className="text-sm font-normal text-gray-400">/hr</span></span>
+                                        <span className="text-2xl font-bold">₹{spot.pricing?.hourlyRate || 25}<span className="text-sm font-normal text-gray-400">/hr</span></span>
                                     </div>
 
                                     <div className="space-y-3">

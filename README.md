@@ -1,184 +1,106 @@
 # 🅿️ ParkEase - Smart Parking Management System
 
-[![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red)]()
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.2-brightgreen)]()
+[![Java](https://img.shields.io/badge/Java-17-orange)]()
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green)]()
 [![React](https://img.shields.io/badge/React-19.2.0-blue)]()
-[![MySQL](https://img.shields.io/badge/MySQL-8.0+-blue)]()
+[![Vite](https://img.shields.io/badge/Vite-7.3-purple)]()
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)]()
+[![Render](https://img.shields.io/badge/Render-Deployable-black)]()
 
-> **A modern, full-stack parking management solution with real-time availability, integrated payments, and QR-based check-in.**
-
----
-
-## 🌟 Features
-
-### For Drivers (Users)
-
-- 🗺️ **Interactive Map Search** - Find available parking spots on an interactive Leaflet map
-- 🎯 **Smart Filtering** - Filter by price, distance, EV charging availability
-- 💳 **Seamless Booking** - One-click booking with integrated payment modal
-- 📱 **QR Ticket Generation** - Instant downloadable QR code tickets after booking
-- ⭐ **Favorites** - Save frequently used parking spots  
-- 🔔 **Real-Time Notifications** - Toast alerts for all actions
-- 💼 **Wallet Integration** - Manage wallet balance and transactions  
-
-### For Providers
-
-- ➕ **Add Parking Listings** - Create new parking spots with details
-- 📊 **Dashboard Analytics** - View bookings, revenue, and statistics
-- 🔍 **QR Scanner** - Scan booking QR codes for check-in
-- 📈 **Booking Management** - Track all bookings in real-time
-- ✅ **Status Updates** - Update parking availability and booking status
-
-### For Admins  
-
-- 🛡️ **Approval Workflow** - Review and approve new parking listings
-- 🚦 **Status Management** - Control (approve/reject) parking spot listings
-- 👥 **User Management** - Manage drivers and providers
-- 📊 **System Analytics** - Comprehensive charts and statistics
+> **A modern full-stack smart parking management solution featuring real-time availability, dynamic pricing, slot booking overlap prevention, QR-based check-in/check-out, booking extensions, wallet integration, notifications, and role-based access.**
 
 ---
 
-## 🏗️ Tech Stack
+## 🌟 Key Features
 
-### Frontend
+### 🚗 For Drivers
+- 🗺️ **Interactive Spot Finder** - Search available parking locations via interactive Leaflet map.
+- 🔒 **Approved Listings Only** - Only admin-approved parking spots are visible and open for booking.
+- ⚡ **Overlap Prevention** - Concurrency and overlap checks ensure slots cannot be double-booked.
+- 📱 **QR Tickets & History** - Instant scannable QR ticket generation, ticket countdowns, and full history.
+- ⏱️ **Booking Extension** - Extend active bookings with automatic fee computation and conflict checking.
+- 🚫 **Instant Cancellation** - Cancel existing reservations easily.
+- 💼 **Digital Wallet** - Add funds, withdraw balance, and view transaction history.
+- 🔔 **Notifications** - Real-time notification feed and unread counter for bookings and status updates.
 
-- **React 19.2** - Modern UI with Hooks and Context API
-- **Vite** - Lightning-fast build tool
-- **Tailwind CSS** - Utility-first styling
-- **Framer Motion** - Smooth animations
-- **Leaflet & React-Leaflet** - Interactive maps
-- **Axios** - HTTP client
-- **Socket.IO Client** - Real-time updates
-- **QRCode.React** - QR code generation
-- **Recharts** - Beautiful charts for analytics
+### 🏢 For Space Providers
+- ➕ **Register Parking Spaces** - Submit parking spots with dimensions, capacity, hourly pricing, and operating hours.
+- 📊 **Provider Dashboard** - Overview of listings, active bookings, and total earnings.
+- 📷 **QR Scanner (Check-In & Check-Out)** - Scan driver QR codes to check drivers in and out.
+- 📋 **Booking List** - View all bookings across owned parking listings.
+
+### 🛡️ For Administrators
+- 🚦 **Approval Workflow** - Inspect pending parking listings and approve or reject with feedback reasons.
+- 👥 **User Management** - View and manage registered drivers and providers.
+- 📈 **System Analytics** - Track total users, active spots, total bookings, and overall system revenue.
+
+---
+
+## 🏗️ Architecture & Technology Stack
 
 ### Backend
+- **Framework**: Spring Boot 3.2.2 on Java 17
+- **Database**: MongoDB Atlas via Spring Data MongoDB
+- **Security**: Stateless JWT (`jjwt 0.11.5`) + BCrypt + Spring Security 6
+- **Containerization**: Multi-stage Docker build with Eclipse Temurin 17 JRE Alpine
+- **Port Binding**: Dynamic Render PORT support (`server.port=${PORT:5002}`) listening on `0.0.0.0`
 
-- **Spring Boot 3.2.2** - Robust Java framework
-- **Spring Security** - JWT-based authentication
-- **MySQL** - Relational database
-- **Maven** - Dependency management
-- **Hibernate / JPA** - ORM framework
-- **WebSocket** - Real-time communication
-- **JWT (io.jsonwebtoken)** - Secure token generation
-
-### DevOps & Deployment
-
-- **Docker** - Containerization (config included)
-- **Render** - Cloud deployment (render.yaml included)
-- **Git** - Version control
+### Frontend
+- **Framework**: React 19 + Vite 7
+- **Routing**: React Router 7 with SPA rewrite configuration
+- **Styling**: Tailwind CSS + Lucide Icons + Framer Motion
+- **Maps**: Leaflet & React-Leaflet
+- **Deployment**: Render Static Site (built to `dist/`)
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Local Development)
 
 ### Prerequisites
+- **Java 17+**
+- **Node.js 18+**
+- **MongoDB** running locally (`mongodb://localhost:27017/parkease_db`) or MongoDB Atlas URI
 
-- **Java 17+** (for backend)
-- **Node.js 18+** (for frontend)
-- **MySQL Server** (local or managed)
-- **Maven** (for backend build)
-
-### 1️⃣ Clone the Repository
-
-```bash
-git clone https://github.com/your-username/parkease.git
-cd parkease
-```
-
-### 2️⃣ Backend Setup
-
+### 1. Run Backend
 ```bash
 cd backend
-
-# Configure application.properties
-# Update the following in src/main/resources/application.properties:
-# - spring.datasource.url=jdbc:mysql://localhost:3306/parkease_db
-# - spring.datasource.username=root
-# - spring.datasource.password=your_password
-# - jwt.secret=your_secret_key
-
-# Build and run
-mvn clean install
-mvn spring-boot:run
+./mvnw clean test     # Runs 7 automated unit tests
+./mvnw spring-boot:run
 ```
+The backend starts on `http://localhost:5002`.
 
-Backend will start on **<http://localhost:5002>**
-
-### 3️⃣ Frontend Setup
-
+### 2. Run Frontend
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Configure environment variables (Development)
-# Create .env file:
-VITE_API_URL=http://localhost:5002/api
-
-# Run development server
 npm run dev
 ```
-
-### Configure Environment Variables (Production)
-
-```env
-# Backend
-DB_URL=jdbc:mysql://your_production_mysql_host:3306/parkease_db
-DB_USERNAME=your_db_username
-DB_PASSWORD=your_db_password
-JWT_SECRET=your_strong_secret_key
-JWT_EXPIRATION=86400000
-
-# Frontend
-VITE_API_URL=https://your-backend-url.com/api
-```
-
-Frontend will start on **<http://localhost:5173>**
+The frontend dev server starts on `http://localhost:5173`.
 
 ---
 
-## 📂 Project Structure
+## 🌐 Deploy to Render
 
-```
+ParkEase includes a complete [`render.yaml`](file:///render.yaml) specification:
 
-parkease/
-├── backend/                 # Spring Boot backend
-│   ├── src/main/java/
-│   │   └── com/parkease/
-│   │       ├── controller/  # REST API endpoints
-│   │       ├── model/       # JPA Entities
-│   │       ├── service/     # Business logic
-│   │       ├── security/    # JWT & Spring Security config
-│   │       ├── dto/         # Data transfer objects
-│   │       └── repository/  # Spring Data JPA repositories
-│   └── src/main/resources/
-│       └── application.properties
-│
-├── frontend/                # React frontend
-│   ├── src/
-│   │   ├── pages/           # Main app pages
-│   │   ├── components/      # Reusable components
-│   │   ├── context/         # React Context providers
-│   │   ├── dashboards/      # Role-specific dashboards
-│   │   └── styles/          # CSS and Tailwind config
-│   └── public/
-│
-├── docker-compose.yml       # Docker setup
-├── render.yaml              # Render deployment config
-└── README.md                # You are here!
+1. Push your repository to GitHub.
+2. In [Render Dashboard](https://dashboard.render.com), select **New +** → **Blueprint**.
+3. Link your repository.
+4. Provide the `MONGODB_URI` environment variable pointing to your MongoDB Atlas cluster.
+5. Render will automatically launch:
+   - `parkease-backend`: Docker Web Service
+   - `parkease-frontend`: Static Site with SPA rewrites
 
-```
+For step-by-step guidance, refer to [`DEPLOYMENT.md`](file:///DEPLOYMENT.md).
 
 ---
 
-## 🔑 Demo Credentials
+## 👥 Default Seed Credentials
+Upon startup, `DataInitializer` automatically creates the following default accounts:
 
-Use these credentials to test the application:
-
-| Role | Email | Password | Features |
-|------|-------|----------|----------|
-| **Admin** | `admin@parkease.com` | `admin123` | Approve listings, Manage users |
-| **Provider** | `owner@parkease.com` | `owner123` | Add parking, Scan QR, View Revenue |
-| **Driver** | `user@parkease.com` | `user123` | Book spots, Pay, Withdrawal |
+| Role | Email | Password |
+|---|---|---|
+| **Admin** | `admin@parkease.com` | `admin123` |
+| **Provider** | `owner@parkease.com` | `owner123` |
+| **Driver** | `user@parkease.com` | `user123` |

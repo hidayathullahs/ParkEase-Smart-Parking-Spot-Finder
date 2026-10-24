@@ -1,20 +1,22 @@
 package com.parkease.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Entity
-@Table(name = "users")
+@Document(collection = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     private String name;
 
-    @Column(unique = true)
+    @Indexed(unique = true)
     private String email;
 
     private String password;
@@ -22,35 +24,26 @@ public class User {
     private String resetPasswordToken;
     private Date resetPasswordExpire;
 
-    @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
-    private String status = "ACTIVE"; // ACTIVE, BANNED
-
-    @Column(unique = true)
+    @Indexed(sparse = true)
     private String googleId;
 
     private String phone = "";
     private String licensePlate = "";
 
-    @ElementCollection
     private List<UserVehicle> vehicles = new ArrayList<>();
 
     private double walletBalance = 0.0;
 
     private String photo = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
-    @ManyToMany
-    @JoinTable(name = "user_favorites", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "listing_id"))
+    @DBRef
     private List<ParkingListing> favorites = new ArrayList<>();
 
-    @ElementCollection
     private List<Transaction> transactions = new ArrayList<>();
 
-    @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
-
-    @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt = new Date();
 
     public User() {
@@ -111,14 +104,6 @@ public class User {
 
     public void setResetPasswordExpire(Date resetPasswordExpire) {
         this.resetPasswordExpire = resetPasswordExpire;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public Role getRole() {
@@ -209,11 +194,9 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
-    @Embeddable
     public static class UserVehicle {
         private String plate;
         private String model;
-        @Enumerated(EnumType.STRING)
         private VehicleType type = VehicleType.FOUR_SEATER;
         private boolean isDefault = false;
 
@@ -253,11 +236,9 @@ public class User {
         }
     }
 
-    @Embeddable
     public static class Transaction {
         private String type; // credit, debit
         private double amount;
-        @Temporal(TemporalType.TIMESTAMP)
         private Date date = new Date();
         private String description;
 

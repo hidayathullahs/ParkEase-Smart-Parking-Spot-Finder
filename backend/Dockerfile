@@ -1,13 +1,29 @@
 # Build Stage
-FROM maven:3.8.4-openjdk-17-slim AS build
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Run Stage
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE 5000
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Add curl for Render health checks
+RUN apk add --no-cache curl
+
+# Create non-root user
+RUN addgroup -S parkease && adduser -S parkease -G parkease
+USER parkease:parkease
+
+# Copy generated JAR (wildcard ensures version updates don't break the build)
+COPY --from=build /app/target/*.jar app.jar
+
+ENV PORT=5002
+EXPOSE 5002
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
+  CMD curl -f http://localhost:${PORT}/health || exit 1
+
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -Dserver.address=0.0.0.0 -jar app.jar"]

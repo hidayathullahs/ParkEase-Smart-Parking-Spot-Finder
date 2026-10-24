@@ -96,9 +96,12 @@ function App() {
           <Route path="profile" element={<Profile />} />
         </Route>
 
-        {/* Legacy/Top-level Routes accessed by Driver */}
-        {/* Legacy/Top-level Routes accessed by Driver */}
+        {/* Top-level & Direct Routes accessed by Driver */}
         <Route path="/find" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><Home /></ProtectedRoute></PageTransition>} />
+        <Route path="/tickets" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><Tickets /></ProtectedRoute></PageTransition>} />
+        <Route path="/history" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><History /></ProtectedRoute></PageTransition>} />
+        <Route path="/bookings" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><MyBookings /></ProtectedRoute></PageTransition>} />
+        <Route path="/dashboard" element={<Navigate to="/driver" replace />} />
         <Route path="/parking/:id" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><ParkingDetails /></ProtectedRoute></PageTransition>} />
         <Route path="/favorites" element={<PageTransition><ProtectedRoute allowedRoles={['USER']}><Favorites /></ProtectedRoute></PageTransition>} />
         <Route path="/notifications" element={<PageTransition><ProtectedRoute allowedRoles={['USER', 'PROVIDER', 'ADMIN']}><Notifications /></ProtectedRoute></PageTransition>} />
