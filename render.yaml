@@ -20,7 +20,7 @@ services:
         fromService:
           type: web
           name: parkease-frontend
-          property: url
+          property: host
       - key: GOOGLE_CLIENT_ID
         sync: false
 
@@ -28,7 +28,6 @@ services:
   - type: web
     name: parkease-frontend
     runtime: static
-    region: oregon
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
@@ -42,6 +41,6 @@ services:
         fromService:
           type: web
           name: parkease-backend
-          property: url
+          property: host
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false

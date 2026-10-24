@@ -77,10 +77,19 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        List<String> origins = Arrays.stream(corsAllowedOrigins.split(","))
+        List<String> rawOrigins = Arrays.stream(corsAllowedOrigins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
+
+        List<String> origins = new java.util.ArrayList<>();
+        for (String o : rawOrigins) {
+            origins.add(o);
+            if (!o.equals("*") && !o.startsWith("http://") && !o.startsWith("https://")) {
+                origins.add("https://" + o);
+                origins.add("http://" + o);
+            }
+        }
 
         if (origins.contains("*") || origins.isEmpty()) {
             configuration.setAllowedOriginPatterns(List.of("*"));
