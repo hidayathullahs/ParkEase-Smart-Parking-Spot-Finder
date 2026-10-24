@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setToken(null);
         localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
+        delete api.defaults.headers.common['Authorization'];
         try {
             navigate('/login');
         } catch (e) {
@@ -44,13 +44,13 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Axios Interceptor for Authorization
+    // Api Interceptor for Authorization
     useEffect(() => {
         if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             localStorage.setItem('token', token);
         } else {
-            delete axios.defaults.headers.common['Authorization'];
+            delete api.defaults.headers.common['Authorization'];
             localStorage.removeItem('token');
         }
     }, [token]);
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
 
                     // Timeout promise to prevent hanging (5s)
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
-                    const apiPromise = axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/me`);
+                    const apiPromise = api.get('/auth/me');
 
                     const { data } = await Promise.race([apiPromise, timeoutPromise]);
                     setUser(data);
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/login`, { email, password });
+            const { data } = await api.post('/auth/login', { email, password });
             setToken(data.token);
             setUser(data);
             redirectUser(data.role);
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
             // Map 'DRIVER' (frontend label) to 'USER' (backend enum), or default to 'USER'
             const validRole = (role === 'DRIVER' || !role) ? 'USER' : role;
 
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/register`, {
+            const { data } = await api.post('/auth/register', {
                 name,
                 email,
                 password,
@@ -135,7 +135,7 @@ export const AuthProvider = ({ children }) => {
 
     const googleLogin = async (credential) => {
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/google`, { token: credential });
+            const { data } = await api.post('/auth/google', { token: credential });
             setToken(data.token);
             setUser(data);
             redirectUser(data.role);

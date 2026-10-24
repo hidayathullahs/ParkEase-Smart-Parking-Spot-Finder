@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Check, X, MapPin, Ruler, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -17,9 +17,7 @@ const AdminApprovals = () => {
     const fetchPending = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/admin/parkings/pending`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.get('/admin/parkings/pending');
             setPendingListings(res.data || []);
         } catch (error) {
             console.error(error);
@@ -36,9 +34,7 @@ const AdminApprovals = () => {
         if (!window.confirm("Approve this parking listing?")) return;
         setProcessing(id);
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/admin/parkings/${id}/approve`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.put(`/admin/parkings/${id}/approve`, {});
             // Remove from list
             setPendingListings(prev => prev.filter(item => item.id !== id));
             toast.success("Listing approved successfully");
@@ -53,9 +49,7 @@ const AdminApprovals = () => {
         if (!rejectReason) return toast.error("Please provide a reason");
         setProcessing(rejectId);
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/admin/parkings/${rejectId}/reject`, { reason: rejectReason }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.put(`/admin/parkings/${rejectId}/reject`, { reason: rejectReason });
             // Remove from list
             setPendingListings(prev => prev.filter(item => item.id !== rejectId));
             setRejectId(null);

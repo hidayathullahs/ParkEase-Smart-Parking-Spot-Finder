@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Trash2, Shield, User, Car } from 'lucide-react';
 
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { token } = useAuth();
 
     const fetchUsers = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/admin/users`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.get('/admin/users');
             setUsers(res.data);
         } catch (error) {
             console.error(error);
@@ -28,9 +25,7 @@ const AdminUsers = () => {
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
         try {
-            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/admin/users/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/admin/users/${id}`);
             fetchUsers(); // Refresh
         } catch (error) {
             alert(error.response?.data?.message || "Delete failed");

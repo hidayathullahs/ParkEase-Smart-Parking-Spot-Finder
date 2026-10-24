@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'; // Added useMap
 import L from 'leaflet';
-import axios from 'axios';
+import api from '../services/api';
 import { X, Navigation, Search, MapPin, Palette, ArrowLeft } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import SuccessAnimation from '../components/SuccessAnimation';
@@ -92,14 +92,12 @@ const Home = () => {
         const fetchData = async () => {
             try {
                 // Fetch approved parkings
-                const parkingRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/parkings`);
+                const parkingRes = await api.get('/parkings');
                 setParkingSpots(parkingRes.data);
 
                 // Fetch user bookings if logged in
                 if (token) {
-                    const bookingRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/my`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    const bookingRes = await api.get('/bookings/my');
                     setMyBookings(bookingRes.data);
                 }
             } catch (error) {
@@ -293,14 +291,12 @@ const Home = () => {
                 vehicleType: 'FOUR_SEATER'
             };
 
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings`, bookingData, config);
+            const { data } = await api.post('/bookings', bookingData);
 
             addToast(`Booking Confirmed for ${selectedSpot.name}!`, 'success');
 
             // Refresh bookings to update UI
-            const bookingRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/my`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const bookingRes = await api.get('/bookings/my');
             setMyBookings(bookingRes.data);
 
             // Show QR Ticket

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { User, Mail, Phone, Lock, Save, Camera } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -23,9 +23,7 @@ const OwnerProfile = () => {
                 const token = authUser?.token || localStorage.getItem('token');
                 if (!token) return;
 
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/me`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const { data } = await api.get('/auth/me');
                 setUser(data);
                 setFormData(prev => ({
                     ...prev,
@@ -46,14 +44,6 @@ const OwnerProfile = () => {
         setLoading(true);
 
         try {
-            const token = authUser?.token || localStorage.getItem('token');
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-            };
-
             const payload = {
                 name: formData.name,
                 email: formData.email,
@@ -65,7 +55,7 @@ const OwnerProfile = () => {
                 payload.password = formData.password;
             }
 
-            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/profile`, payload, config);
+            const { data } = await api.put('/auth/profile', payload);
 
             setUser(data);
             toast.success('Profile updated successfully!');

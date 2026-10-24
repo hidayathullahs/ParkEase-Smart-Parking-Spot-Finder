@@ -14,6 +14,8 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: APP_SEED_ENABLED
+        value: "false"
       - key: FRONTEND_URL
         fromService:
           type: web

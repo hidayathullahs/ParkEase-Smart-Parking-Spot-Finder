@@ -1,32 +1,22 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002/api';
-
-const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        return { Authorization: `Bearer ${token}` };
-    }
-    return {};
-};
+import api from './api';
 
 const getDashboardStats = async () => {
-    const response = await axios.get(`${API_URL}/provider/dashboard`, { headers: getAuthHeader() });
+    const response = await api.get('/provider/dashboard');
     return response.data;
 };
 
 const getMyListings = async () => {
-    const response = await axios.get(`${API_URL}/provider/listings`, { headers: getAuthHeader() });
+    const response = await api.get('/provider/listings');
     return response.data;
 };
 
 const getProviderBookings = async () => {
-    const response = await axios.get(`${API_URL}/bookings/provider`, { headers: getAuthHeader() });
+    const response = await api.get('/bookings/provider');
     return response.data;
 };
 
 const createListing = async (listingData) => {
-    const response = await axios.post(`${API_URL}/provider/listings`, listingData, { headers: getAuthHeader() });
+    const response = await api.post('/provider/listings', listingData);
     return response.data;
 };
 

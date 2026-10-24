@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { ArrowLeft, Upload, MapPin, Trash } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -31,10 +31,7 @@ const AddParking = () => {
             const fetchListing = async () => {
                 setFetching(true);
                 try {
-                    const res = await axios.get(
-                        `${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings/${id}`,
-                        { headers: { Authorization: `Bearer ${token}` } }
-                    );
+                    const res = await api.get(`/provider/listings/${id}`);
                     const spot = res.data.parking || res.data;
                     setFormData({
                         name: spot.title,
@@ -115,17 +112,10 @@ const AddParking = () => {
                 ownershipRelation: formData.ownership
             };
 
-            const url = id
-                ? `${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings/${id}`
-                : `${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`;
-
+            const endpoint = id ? `/provider/listings/${id}` : '/provider/listings';
             const method = id ? 'put' : 'post';
 
-            await axios[method](
-                url,
-                payload,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await api[method](endpoint, payload);
             navigate('/owner/parkings');
         } catch (err) {
             setError(err.response?.data?.message || `Failed to ${id ? 'update' : 'create'} parking`);

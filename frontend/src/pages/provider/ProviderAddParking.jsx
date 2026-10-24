@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload, MapPin, Clock, DollarSign, Calculator, Info } from 'lucide-react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const ProviderAddParking = () => {
@@ -100,9 +100,7 @@ const ProviderAddParking = () => {
                 approxTotalCars: calculated.approxTotalCars
             };
 
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.post('/provider/listings', payload);
             navigate('/owner/dashboard');
         } catch (error) {
             console.error(error);

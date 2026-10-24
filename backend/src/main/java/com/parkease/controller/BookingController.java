@@ -33,9 +33,37 @@ public class BookingController {
         }
     }
 
+    @GetMapping("/tickets")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> getActiveTickets(@AuthenticationPrincipal UserDetails userDetails) {
+        UserDetailsImpl user = (UserDetailsImpl) userDetails;
+        return ResponseEntity.ok(bookingService.getActiveTickets(user.getId()));
+    }
+
+    @GetMapping("/active")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> getActiveBookings(@AuthenticationPrincipal UserDetails userDetails) {
+        UserDetailsImpl user = (UserDetailsImpl) userDetails;
+        return ResponseEntity.ok(bookingService.getActiveTickets(user.getId()));
+    }
+
+    @GetMapping("/history")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> getBookingHistory(@AuthenticationPrincipal UserDetails userDetails) {
+        UserDetailsImpl user = (UserDetailsImpl) userDetails;
+        return ResponseEntity.ok(bookingService.getBookingHistory(user.getId()));
+    }
+
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> getMyBookings(@AuthenticationPrincipal UserDetails userDetails) {
+        UserDetailsImpl user = (UserDetailsImpl) userDetails;
+        return ResponseEntity.ok(bookingService.getMyBookings(user.getId()));
+    }
+
+    @GetMapping("/my-bookings")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> getMyBookingsAlias(@AuthenticationPrincipal UserDetails userDetails) {
         UserDetailsImpl user = (UserDetailsImpl) userDetails;
         return ResponseEntity.ok(bookingService.getMyBookings(user.getId()));
     }

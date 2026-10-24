@@ -1,24 +1,22 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002/api';
+import api from './api';
 
 const getAllParkings = async () => {
-    const response = await axios.get(`${API_URL}/parkings`);
+    const response = await api.get('/parkings');
     return response.data;
 };
 
 const getParkingById = async (id) => {
-    const response = await axios.get(`${API_URL}/parkings/${id}`);
+    const response = await api.get(`/parkings/${id}`);
     return response.data;
 };
 
 const getPrediction = async (id) => {
-    const response = await axios.get(`${API_URL}/parkings/${id}/predict`);
+    const response = await api.get(`/parkings/${id}/predict`);
     return response.data;
 };
 
 const getDynamicPrice = async (id) => {
-    const response = await axios.get(`${API_URL}/parkings/${id}/price`);
+    const response = await api.get(`/parkings/${id}/price`);
     return response.data;
 };
 

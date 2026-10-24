@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Heart, MapPin, Navigation, Star, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../services/api';
 
 const Favorites = () => {
     // Use Real Data from AuthContext
-    const { user, setUser, token } = useAuth();
+    const { user, setUser } = useAuth();
     const [loading, setLoading] = useState(true);
 
     // Favorites are already populated in user object by getMe
@@ -14,9 +14,7 @@ const Favorites = () => {
 
     const removeFavorite = async (id) => {
         try {
-            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/favorite/${id}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const { data } = await api.put(`/auth/favorite/${id}`, {});
             // Update local user state
             const updatedUser = { ...user, favorites: data };
             setUser(updatedUser);

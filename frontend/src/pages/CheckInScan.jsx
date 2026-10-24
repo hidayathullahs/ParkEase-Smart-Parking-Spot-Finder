@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { QrCode, ArrowLeft, CheckCircle, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,13 +17,7 @@ const CheckInScan = () => {
         setBookingDetails(null);
 
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-
-            // Re-using getBookingById. Ideally provider should have access.
-            // If getBookingById is restricted to own booking, this might fail unless provider is admin or owns the spot.
-            // For MVP, assuming getBookingById allows provider/admin to view.
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/${bookingId}`, config);
+            const { data } = await api.get(`/bookings/${bookingId}`);
             setBookingDetails(data);
         } catch (err) {
             setError(err.response?.data?.message || 'Booking not found');
@@ -32,14 +26,11 @@ const CheckInScan = () => {
 
     const handleAction = async (action) => {
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-
-            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/${bookingId}/${action}`, {}, config);
+            await api.put(`/bookings/${bookingId}/${action}`, {});
 
             setSuccessMsg(`Successfully ${action === 'checkin' ? 'Checked In' : 'Checked Out'}!`);
             // Refresh details
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/bookings/${bookingId}`, config);
+            const { data } = await api.get(`/bookings/${bookingId}`);
             setBookingDetails(data);
         } catch (err) {
             setError(err.response?.data?.message || 'Action failed');

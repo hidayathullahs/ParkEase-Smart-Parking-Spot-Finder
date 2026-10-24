@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { User, CreditCard, Save, Plus, Car, Trash2, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,12 +24,7 @@ const Profile = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const config = {
-                    headers: {
-                        Authorization: `Bearer ${user.token}`,
-                    },
-                };
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/me`, config);
+                const { data } = await api.get('/auth/me');
                 setUser(prev => ({ ...prev, ...data })); // Merge with existing token
                 localStorage.setItem('userInfo', JSON.stringify({ ...user, ...data }));
                 setVehicles(data.vehicles || []);
@@ -47,19 +42,12 @@ const Profile = () => {
         setError('');
 
         try {
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${user.token}`,
-                    'Content-Type': 'application/json'
-                },
-            };
-
             const payload = {
                 ...formData,
                 vehicles: vehicles, // Send updated vehicles array
             };
 
-            const { data } = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/auth/profile`, payload, config);
+            const { data } = await api.put('/auth/profile', payload);
 
             localStorage.setItem('userInfo', JSON.stringify(data));
             setUser(data);

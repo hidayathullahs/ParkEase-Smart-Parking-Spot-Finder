@@ -26,7 +26,7 @@ public class DataInitializer implements CommandLineRunner {
     @org.springframework.beans.factory.annotation.Value("${admin.default.password:admin123}")
     private String adminPassword;
 
-    @org.springframework.beans.factory.annotation.Value("${app.seed.enabled:true}")
+    @org.springframework.beans.factory.annotation.Value("${app.seed.enabled:false}")
     private boolean seedEnabled;
 
     @Override

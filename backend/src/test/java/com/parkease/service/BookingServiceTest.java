@@ -196,4 +196,68 @@ class BookingServiceTest {
         assertEquals(4.0, extended.getTotalHours());
         assertEquals(160.0, extended.getTotalAmount());
     }
+
+    @Test
+    void testGetActiveTickets() {
+        String userId = "user-123";
+        Date future = new Date(System.currentTimeMillis() + 3600000);
+        Date past = new Date(System.currentTimeMillis() - 3600000);
+
+        Booking active = new Booking();
+        active.setId("b-active");
+        active.setStatus(BookingStatus.BOOKED);
+        active.setStartTime(new Date());
+        active.setEndTime(future);
+
+        Booking checkedIn = new Booking();
+        checkedIn.setId("b-checkedin");
+        checkedIn.setStatus(BookingStatus.CHECKED_IN);
+        checkedIn.setStartTime(new Date());
+        checkedIn.setEndTime(past); // Even if time passed, user is currently checked in
+
+        Booking completed = new Booking();
+        completed.setId("b-completed");
+        completed.setStatus(BookingStatus.CHECKED_OUT);
+        completed.setStartTime(past);
+        completed.setEndTime(past);
+
+        when(bookingRepository.findByUserId(userId)).thenReturn(List.of(active, checkedIn, completed));
+
+        List<Booking> tickets = bookingService.getActiveTickets(userId);
+        assertEquals(2, tickets.size());
+        assertTrue(tickets.stream().anyMatch(b -> b.getId().equals("b-active")));
+        assertTrue(tickets.stream().anyMatch(b -> b.getId().equals("b-checkedin")));
+    }
+
+    @Test
+    void testGetBookingHistory() {
+        String userId = "user-123";
+        Date past = new Date(System.currentTimeMillis() - 7200000);
+
+        Booking checkedOut = new Booking();
+        checkedOut.setId("b-out");
+        checkedOut.setStatus(BookingStatus.CHECKED_OUT);
+        checkedOut.setStartTime(past);
+        checkedOut.setCreatedAt(past);
+
+        Booking cancelled = new Booking();
+        cancelled.setId("b-cancelled");
+        cancelled.setStatus(BookingStatus.CANCELLED);
+        cancelled.setStartTime(past);
+        cancelled.setCreatedAt(new Date(System.currentTimeMillis() - 3600000));
+
+        Booking active = new Booking();
+        active.setId("b-active");
+        active.setStatus(BookingStatus.BOOKED);
+        active.setStartTime(new Date());
+        active.setEndTime(new Date(System.currentTimeMillis() + 3600000));
+
+        when(bookingRepository.findByUserId(userId)).thenReturn(List.of(checkedOut, cancelled, active));
+
+        List<Booking> history = bookingService.getBookingHistory(userId);
+        assertEquals(2, history.size());
+        // Newest first
+        assertEquals("b-cancelled", history.get(0).getId());
+        assertEquals("b-out", history.get(1).getId());
+    }
 }

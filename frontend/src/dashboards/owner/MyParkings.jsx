@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, MapPin, Edit, Truck, Clock, AlertCircle, CheckCircle, Search, Filter, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { useCallback } from 'react';
@@ -15,9 +15,7 @@ const MyParkings = () => {
         setLoading(true);
 
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const { data } = await api.get('/provider/listings');
 
             setListings(data || []);
         } catch (error) {
@@ -43,9 +41,7 @@ const MyParkings = () => {
         }
 
         try {
-            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/provider/listings/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/provider/listings/${id}`);
             toast.success("Parking spot deleted successfully");
             fetchListings(); // Refresh the list
         } catch (error) {

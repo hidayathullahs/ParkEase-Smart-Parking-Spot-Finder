@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, MapPin, CheckCircle, Shield, Zap, Star, Menu, X, ArrowRight, Clock, CreditCard, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import api from '../services/api';
 import ParkingMap from '../components/ParkingMap';
 import { useTheme } from '../context/ThemeContext';
 
@@ -30,7 +30,7 @@ const Landing = () => {
     useEffect(() => {
         const fetchParkings = async () => {
             try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5002/api'}/parkings`);
+                const { data } = await api.get('/parkings');
                 setParkings(data);
             } catch (error) {
                 console.error("Failed to fetch listings", error);

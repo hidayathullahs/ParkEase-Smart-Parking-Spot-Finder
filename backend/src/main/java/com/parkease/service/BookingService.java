@@ -124,6 +124,36 @@ public class BookingService {
         return bookingRepository.findByUserId(userId);
     }
 
+    public List<Booking> getActiveTickets(String userId) {
+        List<Booking> all = bookingRepository.findByUserId(userId);
+        Date now = new Date();
+        return all.stream()
+                .filter(b -> b.getStatus() == BookingStatus.BOOKED || b.getStatus() == BookingStatus.CHECKED_IN)
+                .filter(b -> b.getStatus() == BookingStatus.CHECKED_IN || (b.getEndTime() != null && b.getEndTime().after(now)))
+                .sorted((a, b) -> {
+                    if (a.getStartTime() == null || b.getStartTime() == null) return 0;
+                    return a.getStartTime().compareTo(b.getStartTime());
+                })
+                .toList();
+    }
+
+    public List<Booking> getBookingHistory(String userId) {
+        List<Booking> all = bookingRepository.findByUserId(userId);
+        Date now = new Date();
+        return all.stream()
+                .filter(b -> b.getStatus() == BookingStatus.CHECKED_OUT ||
+                             b.getStatus() == BookingStatus.CANCELLED ||
+                             b.getStatus() == BookingStatus.EXPIRED ||
+                             (b.getStatus() != BookingStatus.CHECKED_IN && b.getEndTime() != null && b.getEndTime().before(now)))
+                .sorted((a, b) -> {
+                    Date dateA = a.getCreatedAt() != null ? a.getCreatedAt() : a.getStartTime();
+                    Date dateB = b.getCreatedAt() != null ? b.getCreatedAt() : b.getStartTime();
+                    if (dateA == null || dateB == null) return 0;
+                    return dateB.compareTo(dateA);
+                })
+                .toList();
+    }
+
     public List<Booking> getProviderBookings(String providerId) {
         List<ParkingListing> listings = parkingListingRepository.findByProviderIdId(providerId);
         if (listings.isEmpty()) {

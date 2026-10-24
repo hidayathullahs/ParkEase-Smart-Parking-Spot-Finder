@@ -1,52 +1,42 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002/api';
-
-const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        return { Authorization: `Bearer ${token}` };
-    }
-    return {};
-};
+import api from './api';
 
 const getPendingListings = async () => {
-    const response = await axios.get(`${API_URL}/admin/parkings/pending`, { headers: getAuthHeader() });
+    const response = await api.get('/admin/parkings/pending');
     return response.data;
 };
 
 const approveListing = async (id) => {
-    const response = await axios.put(`${API_URL}/admin/parkings/${id}/approve`, {}, { headers: getAuthHeader() });
+    const response = await api.put(`/admin/parkings/${id}/approve`, {});
     return response.data;
 };
 
 const rejectListing = async (id, reason) => {
-    const response = await axios.put(`${API_URL}/admin/parkings/${id}/reject`, { reason }, { headers: getAuthHeader() });
+    const response = await api.put(`/admin/parkings/${id}/reject`, { reason });
     return response.data;
 };
 
 const getAllUsers = async () => {
-    const response = await axios.get(`${API_URL}/admin/users`, { headers: getAuthHeader() });
+    const response = await api.get('/admin/users');
     return response.data;
 };
 
 const getSystemStats = async () => {
-    const response = await axios.get(`${API_URL}/admin/stats`, { headers: getAuthHeader() });
+    const response = await api.get('/admin/stats');
     return response.data;
 };
 
 const getRevenueStats = async () => {
-    const response = await axios.get(`${API_URL}/admin/revenue-stats`, { headers: getAuthHeader() });
+    const response = await api.get('/admin/revenue-stats');
     return response.data;
 };
 
 const getApprovedListings = async () => {
-    const response = await axios.get(`${API_URL}/admin/parkings/approved`, { headers: getAuthHeader() });
+    const response = await api.get('/admin/parkings/approved');
     return response.data;
 };
 
 const updateUser = async (id, updates) => {
-    const response = await axios.put(`${API_URL}/admin/users/${id}`, updates, { headers: getAuthHeader() });
+    const response = await api.put(`/admin/users/${id}`, updates);
     return response.data;
 };
 
